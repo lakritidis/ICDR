@@ -28,13 +28,20 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-flto" />
 					<Add option="-O3" />
+					<Add option="-Wall" />
+					<Add option="-std=c++14" />
 					<Add directory="./" />
 					<Add directory="src/" />
 					<Add directory="src" />
 				</Compiler>
 				<Linker>
+					<Add option="-O3" />
+					<Add option="-flto" />
 					<Add option="-s" />
+					<Add option="-static-libstdc++" />
 					<Add library="pthread" />
 				</Linker>
 			</Target>
@@ -42,9 +49,6 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="fullyWorkingExampleByChatGPT.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="icdr.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -72,6 +76,24 @@
 		<Unit filename="src/Entity.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="src/FST.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/FST.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/FSTpacked.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/FSTpacked.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/Heap.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/Heap.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Unit filename="src/InputData.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -90,6 +112,12 @@
 		<Unit filename="src/InvertedList.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
+		<Unit filename="src/InvertedListBuffer.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/InvertedListBuffer.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
 		<Unit filename="src/InvertedListIterator.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -100,12 +128,6 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="src/Lexicon.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="src/MaxHeap.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="src/MaxHeap.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="src/Query.cpp">

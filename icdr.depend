@@ -1,11 +1,37 @@
 # depslib dependency file v1.0
-1765355219 source:/media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/test.cpp
+1771573183 source:/media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/test.cpp
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
+	"icdr_exposed_gnu.cpp"
 	"icdr_exposed_gnu.cpp"
 
-1765357255 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/icdr_exposed_gnu.cpp
+1771345114 sed_gnu.cpp"
+
+1771495713 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/icdr_exposed_gnu.cpp
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
+	"icdr.cpp"
 	"icdr.cpp"
 
-1765352228 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/icdr.cpp
+1769078338 
+
+1771541399 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/icdr.cpp
 	"stdio.h"
 	"stdlib.h"
 	<stdint.h>
@@ -29,123 +55,6 @@
 	"src/MaxHeap.cpp"
 	"src/Query.cpp"
 	"src/InputData.cpp"
-
-1763906442 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/coding_factory.cpp
-	"coding_factory.h"
-
-1764152712 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/coding_factory.h
-	"coding.h"
-	"rice_coding.h"
-	"pfor_coding.h"
-	"tzp_coding.h"
-	"vbyte_coding.h"
-	"s9_coding.h"
-
-1760212156 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/coding.h
-	"unpack.h"
-
-1244876064 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/unpack.h
-
-1286226112 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/rice_coding.h
-	"coding.h"
-	<iostream>
-
-1759656690 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/pfor_coding.h
-
-1400727202 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/tzp_coding.h
-	"coding.h"
-
-1763913893 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/vbyte_coding.h
-	"coding.h"
-
-1240891638 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/s9_coding.h
-	"coding.h"
-
-1765231072 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputParams.cpp
-	"InputParams.h"
-
-1765231072 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputParams.h
-
-1764262654 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/BitVector.cpp
-	"BitVector.h"
-
-1764263370 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/BitVector.h
-
-1764975810 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedList.cpp
-	"InvertedList.h"
-
-1764975810 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedList.h
-
-1765272178 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedListIterator.cpp
-	"InvertedListIterator.h"
-
-1765270762 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedListIterator.h
-
-1765271641 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Word.cpp
-	"Word.h"
-
-1764263388 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Word.h
-
-1765271752 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/QueryWord.cpp
-	"QueryWord.h"
-
-1764663651 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/QueryWord.h
-
-1765183200 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entities.cpp
-	"Entity.cpp"
-	"Entities.h"
-
-1764586222 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entity.cpp
-	"Entity.h"
-
-1764263370 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entity.h
-
-1765151961 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entities.h
-
-1765182023 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Record.cpp
-	"Entity.h"
-	"Record.h"
-
-1764263369 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Record.h
-
-1764982389 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Lexicon.cpp
-	"Lexicon.h"
-
-1764982380 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Lexicon.h
-
-1765356225 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Result.cpp
-	"Result.h"
-
-1765356312 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Result.h
-
-1765270175 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/MaxHeap.cpp
-	"MaxHeap.h"
-
-1765353869 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/MaxHeap.h
-
-1765356109 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Query.cpp
-	"Query.h"
-
-1765352434 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Query.h
-
-1765353250 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputData.cpp
-	"InputData.h"
-
-1765352434 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputData.h
-
-1765272133 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Records.cpp
-	"Records.h"
-	"Record.cpp"
-
-1765182023 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Records.h
-
-1765436469 source:d:\dev\cpp\icdr\test.cpp
-	"icdr_exposed_gnu.cpp"
-
-1765357255 d:\dev\cpp\icdr\icdr_exposed_gnu.cpp
-	"icdr.cpp"
-
-1765352228 d:\dev\cpp\icdr\icdr.cpp
 	"stdio.h"
 	"stdlib.h"
 	<stdint.h>
@@ -157,16 +66,737 @@
 	<vector>
 	"src/include/coding_factory.cpp"
 	"src/InputParams.cpp"
-	"src/BitVector.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
 	"src/InvertedList.cpp"
 	"src/InvertedListIterator.cpp"
 	"src/Word.cpp"
 	"src/QueryWord.cpp"
-	"src/Entities.cpp"
-	"src/Records.cpp"
 	"src/Lexicon.cpp"
 	"src/Result.cpp"
 	"src/MaxHeap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/MaxHeap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/MaxHeap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<chrono>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<chrono>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<chrono>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/FST.h"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+
+1771191828 Data.cpp"
+
+1763906442 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/coding_factory.cpp
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+	"coding_factory.h"
+
+1763906442 ctory.h"
+
+1764152712 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/coding_factory.h
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+
+1771282455 .h"
+
+1760212156 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/coding.h
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+	"unpack.h"
+
+1244876064 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/unpack.h
+
+1286226112 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/rice_coding.h
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+	"coding.h"
+	<iostream>
+
+1759656690 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/pfor_coding.h
+
+1400727202 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/tzp_coding.h
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+
+1763913893 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/vbyte_coding.h
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+
+1240891638 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/include/s9_coding.h
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+	"coding.h"
+
+1771282146 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputParams.cpp
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+	"InputParams.h"
+
+1771282146 ms.h"
+
+1769078026 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputParams.h
+
+1764262654 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/BitVector.cpp
+	"BitVector.h"
+	"BitVector.h"
+
+1764263370 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/BitVector.h
+
+1771461509 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedList.cpp
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+	"InvertedList.h"
+
+1771282324 ist.h"
+
+1771461598 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedList.h
+
+1770545294 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedListIterator.cpp
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+	"InvertedListIterator.h"
+
+1770545294 istIterator.h"
+
+1769902674 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedListIterator.h
+
+1771373352 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Word.cpp
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+	"Word.h"
+
+1771373352 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Word.h
+
+1770545115 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/QueryWord.cpp
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+	"QueryWord.h"
+
+1770030350 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/QueryWord.h
+
+1771497647 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entities.cpp
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+	"Entity.cpp"
+	"Entities.h"
+
+1771351381 h"
+
+1771367032 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entity.cpp
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+	"Entity.h"
+
+1771344951 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entity.h
+
+1771497616 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Entities.h
+
+1771367032 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Record.cpp
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+	"Entity.h"
+	"Record.h"
+
+1771351381 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Record.h
+
+1771572948 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Lexicon.cpp
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+	"Lexicon.h"
+
+1765900259 "
+
+1771497544 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Lexicon.h
+
+1769599572 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Result.cpp
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+	"Result.h"
+
+1769599572 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Result.h
+
+1765900259 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/MaxHeap.cpp
+	"MaxHeap.h"
+	"MaxHeap.h"
+	"MaxHeap.h"
+	"MaxHeap.h"
+
+1765900030 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/MaxHeap.h
+
+1770623800 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Query.cpp
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+	"Query.h"
+
+1770452213 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Query.h
+
+1771490102 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputData.cpp
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+	"InputData.h"
+
+1770547718 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InputData.h
+
+1771496013 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Records.cpp
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+	"Records.h"
+	"Record.cpp"
+
+1771351381 p"
+
+1771495935 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Records.h
+
+1771928578 source:d:\dev\cpp\icdr\test.cpp
+	"icdr_exposed_gnu.cpp"
+
+1771928669 d:\dev\cpp\icdr\icdr_exposed_gnu.cpp
+	"icdr.cpp"
+
+1771797224 d:\dev\cpp\icdr\icdr.cpp
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<chrono>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/FST.h"
+	"src/Result.cpp"
+	"src/Heap.cpp"
 	"src/Query.cpp"
 	"src/InputData.cpp"
 
@@ -181,101 +811,310 @@
 	"vbyte_coding.h"
 	"s9_coding.h"
 
-1760208556 d:\dev\cpp\icdr\src\include\coding.h
+1760212156 d:\dev\cpp\icdr\src\include\coding.h
 	"unpack.h"
 
-1244872464 d:\dev\cpp\icdr\src\include\unpack.h
+1244876064 d:\dev\cpp\icdr\src\include\unpack.h
 
-1286222512 d:\dev\cpp\icdr\src\include\rice_coding.h
+1286226112 d:\dev\cpp\icdr\src\include\rice_coding.h
 	"coding.h"
 	<iostream>
 
-1759653090 d:\dev\cpp\icdr\src\include\pfor_coding.h
+1759656690 d:\dev\cpp\icdr\src\include\pfor_coding.h
 
-1400723602 d:\dev\cpp\icdr\src\include\tzp_coding.h
+1400727202 d:\dev\cpp\icdr\src\include\tzp_coding.h
 	"coding.h"
 
 1763913893 d:\dev\cpp\icdr\src\include\vbyte_coding.h
 	"coding.h"
 
-1240888038 d:\dev\cpp\icdr\src\include\s9_coding.h
+1240891638 d:\dev\cpp\icdr\src\include\s9_coding.h
 	"coding.h"
 
-1765231072 d:\dev\cpp\icdr\src\inputparams.cpp
+1771282146 d:\dev\cpp\icdr\src\inputparams.cpp
 	"InputParams.h"
 
-1765231072 d:\dev\cpp\icdr\src\inputparams.h
+1769078026 d:\dev\cpp\icdr\src\inputparams.h
 
 1764262654 d:\dev\cpp\icdr\src\bitvector.cpp
 	"BitVector.h"
 
 1764263370 d:\dev\cpp\icdr\src\bitvector.h
 
-1764975810 d:\dev\cpp\icdr\src\invertedlist.cpp
+1771461509 d:\dev\cpp\icdr\src\invertedlist.cpp
 	"InvertedList.h"
 
-1764975810 d:\dev\cpp\icdr\src\invertedlist.h
+1771461598 d:\dev\cpp\icdr\src\invertedlist.h
 
-1765272178 d:\dev\cpp\icdr\src\invertedlistiterator.cpp
+1770545294 d:\dev\cpp\icdr\src\invertedlistiterator.cpp
 	"InvertedListIterator.h"
 
-1765270762 d:\dev\cpp\icdr\src\invertedlistiterator.h
+1769902674 d:\dev\cpp\icdr\src\invertedlistiterator.h
 
-1765271641 d:\dev\cpp\icdr\src\word.cpp
+1771373352 d:\dev\cpp\icdr\src\word.cpp
 	"Word.h"
 
-1764263388 d:\dev\cpp\icdr\src\word.h
+1771373352 d:\dev\cpp\icdr\src\word.h
 
-1765271752 d:\dev\cpp\icdr\src\queryword.cpp
+1770545115 d:\dev\cpp\icdr\src\queryword.cpp
 	"QueryWord.h"
 
-1764663651 d:\dev\cpp\icdr\src\queryword.h
+1770030350 d:\dev\cpp\icdr\src\queryword.h
 
-1765183200 d:\dev\cpp\icdr\src\entities.cpp
+1771927289 d:\dev\cpp\icdr\src\entities.cpp
 	"Entity.cpp"
 	"Entities.h"
 
-1764586222 d:\dev\cpp\icdr\src\entity.cpp
+1771367032 d:\dev\cpp\icdr\src\entity.cpp
 	"Entity.h"
 
-1764263370 d:\dev\cpp\icdr\src\entity.h
+1771344951 d:\dev\cpp\icdr\src\entity.h
 
-1765151961 d:\dev\cpp\icdr\src\entities.h
+1771927289 d:\dev\cpp\icdr\src\entities.h
 
-1765272133 d:\dev\cpp\icdr\src\records.cpp
+1771496013 d:\dev\cpp\icdr\src\records.cpp
 	"Records.h"
 	"Record.cpp"
 
-1765182023 d:\dev\cpp\icdr\src\records.h
+1771495935 d:\dev\cpp\icdr\src\records.h
 
-1765182023 d:\dev\cpp\icdr\src\record.cpp
+1771367032 d:\dev\cpp\icdr\src\record.cpp
 	"Entity.h"
 	"Record.h"
 
-1764263369 d:\dev\cpp\icdr\src\record.h
+1771351381 d:\dev\cpp\icdr\src\record.h
 
-1764982389 d:\dev\cpp\icdr\src\lexicon.cpp
+1771806258 d:\dev\cpp\icdr\src\lexicon.cpp
 	"Lexicon.h"
 
-1764982380 d:\dev\cpp\icdr\src\lexicon.h
+1771497544 d:\dev\cpp\icdr\src\lexicon.h
 
-1765356225 d:\dev\cpp\icdr\src\result.cpp
+1769599572 d:\dev\cpp\icdr\src\result.cpp
 	"Result.h"
 
-1765356312 d:\dev\cpp\icdr\src\result.h
+1769599572 d:\dev\cpp\icdr\src\result.h
 
-1765270175 d:\dev\cpp\icdr\src\maxheap.cpp
+1767860602 d:\dev\cpp\icdr\src\maxheap.cpp
 	"MaxHeap.h"
 
-1765353869 d:\dev\cpp\icdr\src\maxheap.h
+1765900030 d:\dev\cpp\icdr\src\maxheap.h
 
-1765356109 d:\dev\cpp\icdr\src\query.cpp
+1771865049 d:\dev\cpp\icdr\src\query.cpp
 	"Query.h"
 
-1765352434 d:\dev\cpp\icdr\src\query.h
+1770452213 d:\dev\cpp\icdr\src\query.h
 
-1765353250 d:\dev\cpp\icdr\src\inputdata.cpp
+1771798406 d:\dev\cpp\icdr\src\inputdata.cpp
 	"InputData.h"
 
-1765352434 d:\dev\cpp\icdr\src\inputdata.h
+1770547718 d:\dev\cpp\icdr\src\inputdata.h
+
+1771345114 source:c:\users\owner\documents\cpp\icdr\test.cpp
+	"icdr_exposed_gnu.cpp"
+
+1771345101 c:\users\owner\documents\cpp\icdr\icdr_exposed_gnu.cpp
+	"icdr.cpp"
+
+1771191828 c:\users\owner\documents\cpp\icdr\icdr.cpp
+	"stdio.h"
+	"stdlib.h"
+	<bits/stdc++.h>
+	<stdint.h>
+	<string.h>
+	<math.h>
+	<chrono>
+	<time.h>
+	<dirent.h>
+	<assert.h>
+	<vector>
+	"src/include/coding_factory.cpp"
+	"src/InputParams.cpp"
+	"src/Entities.cpp"
+	"src/Records.cpp"
+	"src/InvertedList.cpp"
+	"src/InvertedListIterator.cpp"
+	"src/Word.cpp"
+	"src/QueryWord.cpp"
+	"src/InvertedListBuffer.cpp"
+	"src/Lexicon.cpp"
+	"src/Result.cpp"
+	"src/Heap.cpp"
+	"src/Query.cpp"
+	"src/InputData.cpp"
+
+1763906442 c:\users\owner\documents\cpp\icdr\src\include\coding_factory.cpp
+	"coding_factory.h"
+
+1764152712 c:\users\owner\documents\cpp\icdr\src\include\coding_factory.h
+	"coding.h"
+	"rice_coding.h"
+	"pfor_coding.h"
+	"tzp_coding.h"
+	"vbyte_coding.h"
+	"s9_coding.h"
+
+1760212156 c:\users\owner\documents\cpp\icdr\src\include\coding.h
+	"unpack.h"
+
+1244876064 c:\users\owner\documents\cpp\icdr\src\include\unpack.h
+
+1286226112 c:\users\owner\documents\cpp\icdr\src\include\rice_coding.h
+	"coding.h"
+	<iostream>
+
+1759656690 c:\users\owner\documents\cpp\icdr\src\include\pfor_coding.h
+
+1400727202 c:\users\owner\documents\cpp\icdr\src\include\tzp_coding.h
+	"coding.h"
+
+1763913893 c:\users\owner\documents\cpp\icdr\src\include\vbyte_coding.h
+	"coding.h"
+
+1240891638 c:\users\owner\documents\cpp\icdr\src\include\s9_coding.h
+	"coding.h"
+
+1771282146 c:\users\owner\documents\cpp\icdr\src\inputparams.cpp
+	"InputParams.h"
+
+1769078026 c:\users\owner\documents\cpp\icdr\src\inputparams.h
+
+1771351381 c:\users\owner\documents\cpp\icdr\src\entities.cpp
+	"Entity.cpp"
+	"Entities.h"
+
+1771344951 c:\users\owner\documents\cpp\icdr\src\entity.cpp
+	"Entity.h"
+
+1771344951 c:\users\owner\documents\cpp\icdr\src\entity.h
+
+1771283149 c:\users\owner\documents\cpp\icdr\src\entities.h
+
+1771351381 c:\users\owner\documents\cpp\icdr\src\records.cpp
+	"Records.h"
+	"Record.cpp"
+
+1771283149 c:\users\owner\documents\cpp\icdr\src\records.h
+
+1771351472 c:\users\owner\documents\cpp\icdr\src\record.cpp
+	"Entity.h"
+	"Record.h"
+
+1771351381 c:\users\owner\documents\cpp\icdr\src\record.h
+
+1771282324 c:\users\owner\documents\cpp\icdr\src\invertedlist.cpp
+	"InvertedList.h"
+
+1771200303 c:\users\owner\documents\cpp\icdr\src\invertedlist.h
+
+1770545294 c:\users\owner\documents\cpp\icdr\src\invertedlistiterator.cpp
+	"InvertedListIterator.h"
+
+1769902674 c:\users\owner\documents\cpp\icdr\src\invertedlistiterator.h
+
+1769305253 c:\users\owner\documents\cpp\icdr\src\word.cpp
+	"Word.h"
+
+1769079194 c:\users\owner\documents\cpp\icdr\src\word.h
+
+1770545115 c:\users\owner\documents\cpp\icdr\src\queryword.cpp
+	"QueryWord.h"
+
+1770030350 c:\users\owner\documents\cpp\icdr\src\queryword.h
+
+1771284603 c:\users\owner\documents\cpp\icdr\src\lexicon.cpp
+	"Lexicon.h"
+
+1771283149 c:\users\owner\documents\cpp\icdr\src\lexicon.h
+
+1769599572 c:\users\owner\documents\cpp\icdr\src\result.cpp
+	"Result.h"
+
+1769599572 c:\users\owner\documents\cpp\icdr\src\result.h
+
+1765900259 c:\users\owner\documents\cpp\icdr\src\maxheap.cpp
+	"MaxHeap.h"
+
+1765900030 c:\users\owner\documents\cpp\icdr\src\maxheap.h
+
+1770623800 c:\users\owner\documents\cpp\icdr\src\query.cpp
+	"Query.h"
+
+1770452213 c:\users\owner\documents\cpp\icdr\src\query.h
+
+1771282455 c:\users\owner\documents\cpp\icdr\src\inputdata.cpp
+	"InputData.h"
+
+1770547718 c:\users\owner\documents\cpp\icdr\src\inputdata.h
+
+1766845125 source:/media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/fullyWorkingExampleByPerplexity.cpp
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<float.h>
+	<limits.h>
+
+1766845125 source:d:\dev\cpp\icdr\fullyworkingexamplebyperplexity.cpp
+	<stdio.h>
+	<stdlib.h>
+	<math.h>
+	<float.h>
+	<limits.h>
+
+1769078338 d:\dev\cpp\icdr\src\heap.cpp
+	"Heap.h"
+
+1769078338 d:\dev\cpp\icdr\src\heap.h
+
+1769078338 c:\users\owner\documents\cpp\icdr\src\heap.cpp
+	"Heap.h"
+
+1769078338 c:\users\owner\documents\cpp\icdr\src\heap.h
+
+1769078338 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Heap.cpp
+	"Heap.h"
+	"Heap.h"
+	"Heap.h"
+	"Heap.h"
+	"Heap.h"
+	"Heap.h"
+	"Heap.h"
+	"Heap.h"
+
+1769078338 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/Heap.h
+
+1769707081 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedListBuffer.cpp
+	"InvertedListBuffer.h"
+	"InvertedListBuffer.h"
+	"InvertedListBuffer.h"
+	"InvertedListBuffer.h"
+	"InvertedListBuffer.h"
+	"InvertedListBuffer.h"
+	"InvertedListBuffer.h"
+	"InvertedListBuffer.h"
+
+1769707081 istBuffer.h"
+
+1769079856 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/InvertedListBuffer.h
+
+1769707081 d:\dev\cpp\icdr\src\invertedlistbuffer.cpp
+	"InvertedListBuffer.h"
+
+1769079856 d:\dev\cpp\icdr\src\invertedlistbuffer.h
+
+1769707081 c:\users\owner\documents\cpp\icdr\src\invertedlistbuffer.cpp
+	"InvertedListBuffer.h"
+
+1769079856 c:\users\owner\documents\cpp\icdr\src\invertedlistbuffer.h
+
+1771541489 /media/leo/7CE54B377BB9B18B/dev/cpp/ICDR/src/FST.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdint.h>
+
+1771541489 d:\dev\cpp\icdr\src\fst.h
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<stdint.h>
 

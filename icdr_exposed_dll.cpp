@@ -1,6 +1,7 @@
 /// ////////////////////////////////////////////////////////////////////////////////////////////////
 /// ICDR exposed C functions - Dynamic Library References
 /// C functions that i) wrap around the corresponding C++ functions and ii) are exposed to shared library.
+
 #include "icdr.cpp"
 
 extern "C" {
@@ -59,10 +60,10 @@ __declspec(dllexport) struct rettype * __cdecl build(const char in[], const unsi
 		return ret;
 }
 
-/// Process a query using the inverted index. Return results with similarity in [minsim, maxsim].
-
-struct resulttype process_query(char * q, const unsigned int algo, const unsigned int nres,
-	float mins, float maxs, struct rettype * ret) {
+/// Process a given query q using the inverted index ret. Use the algo algorithm (DAAT, BMW, etc.)
+/// to return nres results within the similarity range [minsim, maxsim].
+__declspec(dllexport) struct resulttype __cdecl retrieve_relevant(char * q, const unsigned int algo,
+	const unsigned int nres, float mins, float maxs, struct rettype * ret) {
 
 		struct resulttype ResultsStruct;
 		uint32_t retrieved_results = 0;
@@ -92,8 +93,60 @@ struct resulttype process_query(char * q, const unsigned int algo, const unsigne
 		}
 
 		/// Process the Query here and "copy" the results to the output structure
-		ResultsStruct.results = input_data.process_query(q, ret->lex, ret->ents, ret->recs,
-			&retrieved_results);
+		ResultsStruct.results = input_data.process_query(q, 0, ret->lex, ret->ents, ret->recs,
+														&retrieved_results);
+		ResultsStruct.num_results = retrieved_results;
+
+		delete PARAMS;
+
+		if (PFOR_CODER) {
+			delete PFOR_CODER;
+			PFOR_CODER = NULL;
+		}
+
+		if(VBYTE_CODER) {
+			delete VBYTE_CODER;
+			VBYTE_CODER = NULL;
+		}
+
+		return ResultsStruct;
+}
+
+/// Retrieve nres negative samples for the Record with id rec_id using the inverted index ret. Use
+/// the algo algorithm (DAAT, BMW, etc.) to return samples within the similarity range [minsim, maxsim].
+__declspec(dllexport) struct resulttype __cdecl retrieve_negative(const unsigned int rec_id,
+	const unsigned int algo, const unsigned int nres, float mins, float maxs, struct rettype * ret) {
+
+		struct resulttype ResultsStruct;
+		uint32_t retrieved_results = 0;
+		struct UserParams params{};
+
+		params.input_data_file = NULL;
+		params.output_dir = NULL;
+		params.random_string = NULL;
+		params.lexicon_table_size = ret->in_params->get_lexicon_table_size();
+		params.compression_block_size = ret->in_params->get_compression_block_size();
+
+		params.query_processing_algorithm = algo;
+		params.num_req_results = nres;
+		params.min_sim = mins;
+		params.max_sim = maxs;
+
+		class InputParams * PARAMS = new InputParams(params);
+		InputData input_data(PARAMS);
+
+		coding_factory cf;
+		if (!PFOR_CODER) {
+			PFOR_CODER = cf.get_coder(1);
+		}
+
+		if (!VBYTE_CODER) {
+			VBYTE_CODER = cf.get_coder(2);
+		}
+
+		/// Process the Query here and "copy" the results to the output structure
+		ResultsStruct.results = input_data.process_query(NULL, rec_id, ret->lex, ret->ents,
+														ret->recs, &retrieved_results);
 		ResultsStruct.num_results = retrieved_results;
 
 		delete PARAMS;
@@ -113,7 +166,7 @@ struct resulttype process_query(char * q, const unsigned int algo, const unsigne
 
 /// Write the inverted index and the accompanying data (Entities and Records) that are passed via
 /// the ret pointer. Also write the parameters file. All four files are written in output_dir.
-void write_index(struct rettype * ret, const char output_dir[]) {
+__declspec(dllexport) void __cdecl write_index(struct rettype * ret, const char output_dir[]) {
 	char * filename = NULL;
 	uint32_t slen = strlen(output_dir) + 8;
 
@@ -123,14 +176,13 @@ void write_index(struct rettype * ret, const char output_dir[]) {
 	snprintf(filename, slen + 1, "%sprm.dat", output_dir);
 	filename[slen] = 0;
 	FILE * prm_file = fopen(filename, "w+b");
-	printf("Writing the parameters file...\n"); fflush(NULL);
 	if (prm_file) {
-		// printf("|%s|\n", filename);
+		printf("Writing the parameters file...\n"); fflush(NULL);
 		ret->in_params->write(prm_file);
 		delete [] filename;
 		fclose(prm_file);
 	} else {
-		printf("Error opening parameters file for writing: %s\n", filename);
+		fprintf(stderr, "Error opening the parameters file for writing: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -140,14 +192,13 @@ void write_index(struct rettype * ret, const char output_dir[]) {
 	snprintf(filename, slen + 1, "%sivf.dat", output_dir);
 	filename[slen] = 0;
 	FILE * ivf_file = fopen(filename, "w+b");
-	printf("Writing the inverted file...\n"); fflush(NULL);
 	if (ivf_file) {
-		// printf("|%s|\n", filename);
+		printf("Writing the Inverted file...\n"); fflush(NULL);
 		ret->lex->write_index(ivf_file);
 		delete [] filename;
 		fclose(ivf_file);
 	} else {
-		printf("Error opening Inverted File for writing: %s\n", filename);
+		fprintf(stderr, "Error opening the Inverted file for writing: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -157,14 +208,13 @@ void write_index(struct rettype * ret, const char output_dir[]) {
 	snprintf(filename, slen + 1, "%sent.dat", output_dir);
 	filename[slen] = 0;
 	FILE * ent_file = fopen(filename, "w+b");
-	printf("Writing the entities file...\n"); fflush(NULL);
 	if (ent_file) {
-		// printf("|%s|\n", filename);
+		printf("Writing the Entities file...\n"); fflush(NULL);
 		ret->ents->write(ent_file);
 		delete [] filename;
 		fclose(ent_file);
 	} else {
-		printf("Error opening the Entities file for writing: %s\n", filename);
+		fprintf(stderr, "Error opening the Entities file for writing: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -174,14 +224,13 @@ void write_index(struct rettype * ret, const char output_dir[]) {
 	snprintf(filename, slen + 1, "%srec.dat", output_dir);
 	filename[slen] = 0;
 	FILE * rec_file = fopen(filename, "w+b");
-	printf("Writing the records file...\n"); fflush(NULL);
 	if (rec_file) {
-		// printf("|%s|\n", filename);
+		printf("Writing the Records file...\n"); fflush(NULL);
 		ret->recs->write(rec_file);
 		delete [] filename;
 		fclose(rec_file);
 	} else {
-		printf("Error opening the Records file for writing: %s\n", filename);
+		fprintf(stderr, "Error opening the Records file for writing: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -199,7 +248,7 @@ void write_index(struct rettype * ret, const char output_dir[]) {
 
 /// Read the inverted index, the accompanying data (Entities and Records), and the parameters file
 /// from disk and store them into a rettype structure. All four files must be in output_dir.
-struct rettype * read_index(const char output_dir[]) {
+__declspec(dllexport) struct rettype * __cdecl read_index(const char output_dir[]) {
 	char * filename = NULL;
 	uint32_t slen = strlen(output_dir) + 8;
 
@@ -211,14 +260,14 @@ struct rettype * read_index(const char output_dir[]) {
 	snprintf(filename, slen + 1, "%sprm.dat", output_dir);
 	filename[slen] = 0;
 	FILE * prm_file = fopen(filename, "rb");
-	printf("Reading the parameters file...\n"); fflush(NULL);
 	if (prm_file) {
+		printf("Reading the parameters file...\n"); fflush(NULL);
 		ret->in_params = new InputParams();
 		ret->in_params->read(prm_file);
 		delete [] filename;
 		fclose(prm_file);
 	} else {
-		printf("Error opening the parameters file for reading: %s\n", filename);
+		fprintf(stderr, "Error opening the parameters file for reading: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -235,7 +284,7 @@ struct rettype * read_index(const char output_dir[]) {
 		delete [] filename;
 		fclose(ivf_file);
 	} else {
-		printf("Error opening Inverted File for reading: %s\n", filename);
+		fprintf(stderr, "Error opening the Inverted file for reading: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -245,14 +294,14 @@ struct rettype * read_index(const char output_dir[]) {
 	snprintf(filename, slen + 1, "%sent.dat", output_dir);
 	filename[slen] = 0;
 	FILE * ent_file = fopen(filename, "rb");
-	printf("Reading the entities file...\n"); fflush(NULL);
 	if (ent_file) {
-		ret->ents = new Entities(1048576);
+		printf("Reading the Entities file...\n"); fflush(NULL);
+		ret->ents = new Entities(40000037);
 		ret->ents->read(ent_file);
 		delete [] filename;
 		fclose(ent_file);
 	} else {
-		printf("Error opening the Entities file for reading: %s\n", filename);
+		fprintf(stderr, "Error opening the Entities file for reading: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -262,14 +311,14 @@ struct rettype * read_index(const char output_dir[]) {
 	snprintf(filename, slen + 1, "%srec.dat", output_dir);
 	filename[slen] = 0;
 	FILE * rec_file = fopen(filename, "rb");
-	printf("Reading the records file...\n"); fflush(NULL);
 	if (rec_file) {
+		printf("Reading the Records file...\n"); fflush(NULL);
 		ret->recs = new Records();
-		ret->recs->read(rec_file);
+		ret->recs->read(rec_file, ret->ents);
 		delete [] filename;
 		fclose(rec_file);
 	} else {
-		printf("Error opening the Records file for reading: %s\n", filename);
+		fprintf(stderr, "Error opening the Records file for reading: %s\n", filename);
 		delete [] filename;
 		exit(-1);
 	}
@@ -289,7 +338,7 @@ struct rettype * read_index(const char output_dir[]) {
 
 /// Destroy and deallocate the memory occupied by the three primary data structures:
 /// The inverted index, the entities object and the array or Records
-void destroy(struct rettype * ret) {
+__declspec(dllexport) void __cdecl destroy(struct rettype * ret) {
 	delete ret->lex;
 	delete ret->ents;
 	delete ret->recs;
@@ -309,7 +358,7 @@ void destroy(struct rettype * ret) {
 }
 
 /// Display the inverted index
-void display_index(struct rettype * ret) {
+__declspec(dllexport) void __cdecl display_index(struct rettype * ret) {
 	coding_factory cf;
 	if (!PFOR_CODER) {
 		PFOR_CODER = cf.get_coder(1);
@@ -333,8 +382,56 @@ void display_index(struct rettype * ret) {
 }
 
 /// Display the Entities
-void display_entities(struct rettype * ret) {
+__declspec(dllexport) void __cdecl display_entities(struct rettype * ret) {
 	ret->ents->display();
+}
+
+/// Get (return) the Entities
+__declspec(dllexport) struct entitytype get_entities(struct rettype * ret) {
+	uint32_t i = 0, x = 0;
+	class Entity * q;
+
+	struct entitytype EntitiesStruct;
+	EntitiesStruct.num_entities = ret->ents->get_num_nodes();
+	EntitiesStruct.entities = new Entity[ret->ents->get_num_nodes()];
+
+	for (i = 0; i < ret->ents->get_num_slots(); i++) {
+		if (ret->ents->get_table_entry(i) != NULL) {
+			for (q = ret->ents->get_table_entry(i); q != NULL; q = q->get_next()) {
+				EntitiesStruct.entities[x++] = (*q);
+			}
+		}
+	}
+	return EntitiesStruct;
+}
+
+/// Display the Records
+__declspec(dllexport) void display_records(struct rettype * ret) {
+	ret->recs->display();
+}
+
+/// Get (return) the Records
+__declspec(dllexport) struct recordtype get_records(struct rettype * ret) {
+	uint32_t i = 0, x = 0;
+	struct recordtype RecordsStruct;
+	RecordsStruct.num_records = ret->recs->get_num_records();
+	RecordsStruct.records = new Record[ret->recs->get_num_records()];
+
+	for (i = 0; i < ret->recs->get_num_records(); i++) {
+		RecordsStruct.records[x++] = *(ret->recs->get_record(i));
+	}
+	return RecordsStruct;
+}
+
+/// Return the Inverted Index statistics
+__declspec(dllexport) void compute_stats(unsigned int what, struct rettype * ret) {
+	if (what == 1) {
+		ret->lex->compute_stats();
+	} else if (what == 2) {
+		ret->recs->compute_stats();
+	} else if (what == 3) {
+		ret->ents->compute_stats();
+	}
 }
 
 }
