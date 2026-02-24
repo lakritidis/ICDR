@@ -1,10 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-#from .RAM import *
-#from .Comb import *
-#from .Majoritarian import *
-#from .MarkovChains import *
-#from .Weighted import *
+#from .icdr_class import *
 
-#__version__ = '1.0.2'
+#__version__ = '0.0.11'

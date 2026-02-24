@@ -1,12 +1,9 @@
 from distutils.core import setup
-from setuptools import find_packages
+import setuptools
 
 DESCRIPTION = 'ICDR is a high performing library for retrieving contrastive text data from a document collection.'
-LONG_DESCRIPTION = 'ICDR builds an inverted index structure and several fast look-up tables with the aim of '\
-    'retrieving similar texts from a corpus. The library is ideal for efficient entity matching, entity resolution, '\
-    'record linkage, and deduplication applications in the NLP realm. ICDR allows for very fast retrieval of similar, '\
-    'positive (i.e. matching), and negative (i.e. non-matching) text samples which can be used either directly, or to '\
-    'fine-tune LLMs and other models.'
+with open("README.md", "r") as fh:
+    LONG_DESCRIPTION = fh.read()
 
 setup(
     name='icdr',
@@ -18,13 +15,18 @@ setup(
     author_email="lakritidis@ihu.gr",
     maintainer="Leonidas Akritidis",
     maintainer_email="lakritidis@ihu.gr",
-    packages=find_packages(),
+    packages=setuptools.find_packages(),
     url='https://github.com/lakritidis/icdr',
-    install_requires=["pandas", "matplotlib"],
+    install_requires=["pandas"],
     license="Apache",
     keywords=[
         "index", "inverted index", "contrastive data", "pairs", "information retrieval",
         "similarity search", "search", "string search", "approximate retrieval"],
-    py_modules=["flagr"],
-    package_data={'': ['icdr.so', 'icdr.dylib', 'icdr.dll', 'libgcc_s_seh-1.dll', 'libstdc++-6.dll']}
+    py_modules=["icdr"],
+    package_data={'': ['icdr.so', 'icdr.dylib', 'icdr.dll', 'libgcc_s_seh-1.dll', 'libstdc++-6.dll']},
+    classifiers=[
+            "Programming Language :: Python :: 3",
+            "License :: OSI Approved :: Apache License",
+            "Operating System :: OS Independent",
+        ],
 )

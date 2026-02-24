@@ -19,11 +19,3 @@ class ResultsTypeConnectorClass(ctypes.Structure):
         ("num_results", ctypes.c_int),
         ("results", ctypes.POINTER(ResultTypeConnectorClass)),
     ]
-
-class EntitiesTypeConnectorClass(ctypes.Structure):
-    # subclassing c_void_p creates an opaque pointer type that is distinct
-    # from c_void_p, and can only be instantiated as a pointer
-    _fields_ = [
-        ("num_results", ctypes.c_int),
-        ("results", ctypes.POINTER(ResultTypeConnectorClass)),
-    ]

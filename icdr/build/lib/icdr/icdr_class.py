@@ -1,13 +1,8 @@
 import ctypes
 import pandas as pd
-
-# For Deployment
-#from icdr.icdr_base import icdr_base
-#from icdr.icdr_types import IndexDataConnectorClass, ResultsTypeConnectorClass, ResultTypeConnectorClass
-
-# For development
 from icdr_base import icdr_base
 from icdr_types import IndexDataConnectorClass, ResultsTypeConnectorClass, ResultTypeConnectorClass
+
 
 class icdr(icdr_base):
     def __init__(self):
@@ -37,8 +32,8 @@ class icdr(icdr_base):
         ]
         self.icdr_lib.build.restype = IndexDataConnectorClass
 
-        # Submit a query to the inverted index - get relevant documents
-        self.icdr_lib.retrieve_relevant.argtypes = [
+        # Submit a query to the inverted index
+        self.icdr_lib.process_query.argtypes = [
             ctypes.c_char_p,            # The query to be processed
             ctypes.c_int,               # The query processing strategy (1: D-A-A-T/BMW)
             ctypes.c_int,               # The number of results to be retrieved
@@ -46,18 +41,7 @@ class icdr(icdr_base):
             ctypes.c_float,             # Maximum 'similarity' threshold
             IndexDataConnectorClass     # A class with implicit pointers to the Index, the Entities and the Records.
         ]
-        self.icdr_lib.retrieve_relevant.restype = ResultsTypeConnectorClass
-
-        # Submit a Record ID to the inverted index - get negative samples
-        self.icdr_lib.retrieve_negative.argtypes = [
-            ctypes.c_int,               # The ID of the Record for which we are searching for negatives.
-            ctypes.c_int,               # The query processing strategy (1: D-A-A-T/BMW)
-            ctypes.c_int,               # The number of results to be retrieved
-            ctypes.c_float,             # Minimum 'similarity' threshold
-            ctypes.c_float,             # Maximum 'similarity' threshold
-            IndexDataConnectorClass     # A class with implicit pointers to the Index, the Entities and the Records.
-        ]
-        self.icdr_lib.retrieve_negative.restype = ResultsTypeConnectorClass
+        self.icdr_lib.process_query.restype = ResultsTypeConnectorClass
 
         # Write the inverted index and the accompanying data (Entities and Records) that are passed via a restype_class
         # pointer. Also write the parameters file. All four files will be written to the same output directory.
@@ -81,7 +65,7 @@ class icdr(icdr_base):
         ]
         self.icdr_lib.destroy.restype = None
 
-        # Display the Inverted Index and the accompanying data
+        # Display the Inverted Index
         self.icdr_lib.display_index.argtypes = [
             IndexDataConnectorClass     # A class with implicit pointers to the Index, the Entities and the Records.
         ]
@@ -93,12 +77,6 @@ class icdr(icdr_base):
         ]
         self.icdr_lib.display_entities.restype = None
 
-        # Compute several statistics and memory usage of the index and its data structures
-        self.icdr_lib.compute_stats.argtypes = [
-            ctypes.c_int,
-            IndexDataConnectorClass     # A class with implicit pointers to the Index, the Entities and the Records.
-        ]
-        self.icdr_lib.compute_stats.restype = None
 
     # Given a document collection, construct an Inverted Index, a list of Records and a list of matching entities.
     def build(self, input_file="", input_df=None, lex_size=300007, min_term_length=1, max_term_length=30,
@@ -133,7 +111,7 @@ class icdr(icdr_base):
         )
 
     # Submit a query to the Inverted index and retrieve the results
-    def retrieve_relevant(self, q, num_results=10, min_sim=0, max_sim=1.0, algorithm='bmw') -> pd.DataFrame:
+    def retrieve(self, q, num_results=10, min_sim=0, max_sim=1.0, algorithm='bmw') -> pd.DataFrame:
         """
         Submit a query to the Inverted index and retrieve the results.
 
@@ -150,7 +128,7 @@ class icdr(icdr_base):
         else:
             print("The algorithm may take values from ('bmw')")
 
-        retrieved_results = self.icdr_lib.retrieve_relevant(
+        retrieved_results = self.icdr_lib.process_query(
             bytes(q, 'ASCII'),
             algo_param,
             num_results,
@@ -206,18 +184,6 @@ class icdr(icdr_base):
     def display_entities(self):
         if self.index_data:
             self.icdr_lib.display_entities(self.index_data)
-        else:
-            print("No data to display")
-
-    def display_records(self):
-        if self.index_data:
-            self.icdr_lib.display_records(self.index_data)
-        else:
-            print("No data to display")
-
-    def compute_stats(self, d):
-        if self.index_data:
-            self.icdr_lib.compute_stats(d, self.index_data)
         else:
             print("No data to display")
 
