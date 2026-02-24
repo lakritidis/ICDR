@@ -1,11 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// Entity Implementation File: An object used to store a single entity
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Entity implementation file: An object used to store a single entity
 
-#ifndef ICDS_ENTITY_CPP
-#define ICDS_ENTITY_CPP
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_ENTITY_CPP
+#define ICDR_ENTITY_CPP
 
 #include "Entity.h"
 
@@ -81,24 +83,34 @@ void Entity::write(FILE * fp) {
 /// Read an Entity object from disk (file fp)
 void Entity::read(FILE * fp) {
 	uint32_t len = 0;
+	size_t nread = 0;
 
-	fread(&this->id, sizeof(uint32_t), 1, fp);
-	fread(&len, sizeof(uint32_t), 1, fp);
+	nread = fread(&this->id, sizeof(uint32_t), 1, fp);
+	if (nread == 0) {
+		fprintf(stderr, "Unexpected end of Entities file\n");
+	}
+	nread = fread(&len, sizeof(uint32_t), 1, fp);
 	if (len > 0) {
 		this->code = new char[len + 1];
-		fread(this->code, sizeof(char), len, fp);
+		nread = fread(this->code, sizeof(char), len, fp);
 		this->code[len] = 0;
 	} else {
 		this->code = NULL;
 	}
-	fread(&this->num_matching_records, sizeof(uint32_t), 1, fp);
+	nread = fread(&this->num_matching_records, sizeof(uint32_t), 1, fp);
 
 	this->num_alloc_matching_records = this->num_matching_records;
 	this->matching_records = (uint32_t *)malloc(this->num_matching_records * sizeof(uint32_t));
 
-	fread(this->matching_records, sizeof(uint32_t), this->num_matching_records, fp);
+	nread = fread(this->matching_records, sizeof(uint32_t), this->num_matching_records, fp);
 
 	this->next = NULL;
+}
+
+/// Compute the memory footprint of an Entity object
+uint32_t Entity::get_footprint() {
+	return sizeof(Entity) + (strlen(this->code) + 1) * sizeof(char) +
+		this->num_matching_records * sizeof(uint32_t);
 }
 
 /// Mutators

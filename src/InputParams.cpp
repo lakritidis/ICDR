@@ -1,13 +1,14 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// InputPrams Implementation File: An object used to store input parameters coming from external
-/// calls.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+InputPrams implementation dile: An object used to store input parameters coming from external calls.
+
+L. Akritidis, 2026
+*/
 
 
-#ifndef ICDS_INPUTPARAMS_CPP
-#define ICDS_INPUTPARAMS_CPP
+#ifndef ICDR_INPUTPARAMS_CPP
+#define ICDR_INPUTPARAMS_CPP
 
 #include "InputParams.h"
 
@@ -146,47 +147,52 @@ void InputParams::write(FILE * fp) {
 /// Read the execution parameters from disk (written from a previous index construction)
 void InputParams::read(FILE * fp) {
 	uint32_t v = 0;
-
+	size_t nread = 0;
 	if (fp) {
-		fread(&v, sizeof(uint32_t), 1, fp);
+		nread = fread(&v, sizeof(uint32_t), 1, fp);
+		if (nread == 0) {
+			fprintf(stderr, "Unexpected end of prameters file\n");
+			exit(-1);
+		}
+
 		if (v > 0) {
 			this->input_data_file = new char[v + 1];
-			fread(this->input_data_file, sizeof(char), v, fp);
+			nread = fread(this->input_data_file, sizeof(char), v, fp);
 			this->input_data_file[v] = 0;
 		} else {
 			this->input_data_file = NULL;
 		}
 
-		fread(&v, sizeof(uint32_t), 1, fp);
+		nread = fread(&v, sizeof(uint32_t), 1, fp);
 		if (v > 0) {
 			this->random_string = new char[v + 1];
-			fread(this->random_string, sizeof(char), v, fp);
+			nread = fread(this->random_string, sizeof(char), v, fp);
 			this->random_string[v] = 0;
 		} else {
 			this->random_string = NULL;
 		}
 
-		fread(&v, sizeof(uint32_t), 1, fp);
+		nread = fread(&v, sizeof(uint32_t), 1, fp);
 		if (v > 0) {
 			this->output_dir = new char[v + 1];
-			fread(this->output_dir, sizeof(char), v, fp);
+			nread = fread(this->output_dir, sizeof(char), v, fp);
 			this->output_dir[v] = 0;
 		} else {
 			this->output_dir = NULL;
 		}
 
-		fread(&this->num_req_results, sizeof(uint32_t), 1, fp);
-		fread(&this->index_type, sizeof(uint32_t), 1, fp);
-		fread(&this->min_term_length, sizeof(uint32_t), 1, fp);
-		fread(&this->max_term_length, sizeof(uint32_t), 1, fp);
-		fread(&this->lexicon_table_size, sizeof(uint32_t), 1, fp);
-		fread(&this->compression_block_size, sizeof(uint32_t), 1, fp);
-		fread(&this->query_processing_algorithm, sizeof(uint32_t), 1, fp);
-		fread(&this->index_type, sizeof(uint32_t), 1, fp);
-		fread(&this->handle_hyphens, sizeof(bool), 1, fp);
-		fread(&this->handle_slashes, sizeof(bool), 1, fp);
-		fread(&this->min_sim, sizeof(float), 1, fp);
-		fread(&this->max_sim, sizeof(float), 1, fp);
+		nread = fread(&this->num_req_results, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->index_type, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->min_term_length, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->max_term_length, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->lexicon_table_size, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->compression_block_size, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->query_processing_algorithm, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->index_type, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->handle_hyphens, sizeof(bool), 1, fp);
+		nread = fread(&this->handle_slashes, sizeof(bool), 1, fp);
+		nread = fread(&this->min_sim, sizeof(float), 1, fp);
+		nread = fread(&this->max_sim, sizeof(float), 1, fp);
 
 	} else {
 		printf("Error opening the data file for input parameters\n");

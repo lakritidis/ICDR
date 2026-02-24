@@ -1,13 +1,16 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// InvertedListIterator Implementation File: An object that iterates through pairs of integers. It
-/// describes the occurrences of words in documents. The postings are decompressed here.
-///
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+InvertedListIterator implementation file: An object that iterates through the compressed postings of
+an InvertedList. The object maintains several cursors and two buffers to store the decompressed
+docIDs and document scores. The postings are decompressed here during query processing.
 
-#ifndef ICDS_INVERTEDLISTITERATOR_CPP
-#define ICDS_INVERTEDLISTITERATOR_CPP
+L. Akritidis, 2026
+*/
+
+
+#ifndef ICDR_INVERTEDLISTITERATOR_CPP
+#define ICDR_INVERTEDLISTITERATOR_CPP
 
 #include "InvertedListIterator.h"
 
@@ -15,7 +18,7 @@
 InvertedListIterator::InvertedListIterator(class InvertedList * il, uint32_t block_size) :
 	inv_list( il ),
 	dec_docIDs( new uint32_t[block_size * sizeof(uint32_t)]() ),
-	dec_dfreqs( new uint32_t[block_size * sizeof(uint32_t)]() ),
+	dec_dscors( new uint32_t[block_size * sizeof(uint32_t)]() ),
 	cur_docID(NULL),
 	final_docID(0),
 	cur_block(0),
@@ -30,12 +33,16 @@ InvertedListIterator::InvertedListIterator(class InvertedList * il, uint32_t blo
 
 /// Destructor
 InvertedListIterator::~InvertedListIterator() {
-	if (this->dec_docIDs) { delete [] this->dec_docIDs; }
-	if (this->dec_dfreqs) { delete [] this->dec_dfreqs; }
+	if (this->dec_docIDs) {
+		delete [] this->dec_docIDs;
+	}
+	if (this->dec_dscors) {
+		delete [] this->dec_dscors;
+	}
 }
 
 /// Evaluate a posting of the Inverted List according to BM25
-score_t InvertedListIterator::eval_posting_BM25(score_t K, score_t idf, score_t k1) {
+score_t InvertedListIterator::eval_posting_BM25(score_t K, score_t idf) {
 
 	score_t score = 0.0;
 	uint32_t tfreq = 0;
@@ -43,16 +50,46 @@ score_t InvertedListIterator::eval_posting_BM25(score_t K, score_t idf, score_t 
 	/// Decode the frequecy chunk (in case it is not already decoded) and if it is a long list.
 	if (!this->block_decoded_freq) {
 		this->block_decoded_freq = true;
-		this->decode_frequencies(this->cur_block);
+		this->decode_scores(this->cur_block);
 	}
 
 	/// Find the term frequency within that posting by dereferencing dec_freqs[this->cur_offset]
-	tfreq = this->dec_dfreqs[this->cur_offset];
+	tfreq = this->dec_dscors[this->cur_offset];
 
 	/// Compute the BM25 Score
-	score = (idf * tfreq * (k1 + 1)) / ( tfreq + K );
+	score = idf * tfreq * (BM25_k1_PARAM + 1.0f) / ( tfreq + K );
 
 	return score;
+}
+
+score_t InvertedListIterator::get_cur_score() {
+	score_t scaler = 0.0f;
+
+	/// Decode the score chunk (in case it is not already decoded) and if it is a long list.
+	if (!this->block_decoded_freq) {
+		this->block_decoded_freq = true;
+		this->decode_scores(this->cur_block);
+	}
+
+	/// Reconstruct the BM25 score from its quantized form
+	/// For long lists, multiply with the block scaler
+	if (this->num_blocks > 1) {
+		scaler = this->inv_list->skip_table[this->cur_block].scaler;
+	} else {
+		scaler = SHL_SCALER;
+	}
+	return this->dec_dscors[this->cur_offset] / scaler;
+}
+
+score_t InvertedListIterator::get_cur_blockMax_score() {
+	if (this->num_blocks > 1) {
+		return this->inv_list->skip_table[this->cur_block].blockMax_score;
+	}
+	return this->inv_list->get_listMax_score();
+}
+
+inline score_t InvertedListIterator::get_listMax_score() {
+	return this->inv_list->get_listMax_score();
 }
 
 /// Decode the DocIDs of a given block
@@ -110,37 +147,34 @@ uint32_t * InvertedListIterator::decode_docIDs(uint32_t block) {
 	return dout_ptr;
 }
 
-
 /// Decode the frequencies of a specific block
-uint32_t *InvertedListIterator::decode_frequencies(uint32_t block) {
+uint32_t *InvertedListIterator::decode_scores(uint32_t block) {
 
 	uint32_t *fin_ptr, *fout_ptr;
 	uint32_t cur_block_size;
 
 	/// Clear the buffer storing the doc IDs
-	memset(this->dec_dfreqs, 0, this->block_size * sizeof(uint32_t));
+	memset(this->dec_dscors, 0, this->block_size * sizeof(uint32_t));
 
 	/// Decode a dfreq block that belongs to a short list: No skip table exists and we use VBYTE
 	if (this->num_blocks == 1) {
 		cur_block_size = this->inv_list->get_num_postings();
 
-		fin_ptr = this->inv_list->dfreqs;
-		fout_ptr = this->dec_dfreqs;
+		fin_ptr = this->inv_list->dscors;
+		fout_ptr = this->dec_dscors;
 
 		/// Decompress
 		VBYTE_CODER->Decompression(fin_ptr, fout_ptr, cur_block_size);
-/*
-		for (uint32_t y = 0; y < cur_block_size; y++) {
-			printf("DocFreq %d: %d\n", y + 1, this->dec_dfreqs[y]);
-		}
-*/
+
+		// for (uint32_t y=0; y<cur_block_size; y++) { printf("DocFreq %d: %d\n", y+1, this->dec_dscors[y]); }
+
 	/// Decode a dfreq block that belongs to a long list: Refer to the skip table exists and use P4D
 	} else {
 		cur_block_size = this->inv_list->skip_table[block].block_size;
 		PFOR_CODER->set_size(cur_block_size);
 
-		fin_ptr = this->inv_list->dfreqs + this->inv_list->skip_table[block].fwrd;
-		fout_ptr = this->dec_dfreqs;
+		fin_ptr = this->inv_list->dscors + this->inv_list->skip_table[block].swrd;
+		fout_ptr = this->dec_dscors;
 
 		/// Decompress
 		PFOR_CODER->Decompression(fin_ptr, fout_ptr, this->block_size);
@@ -151,7 +185,9 @@ uint32_t *InvertedListIterator::decode_frequencies(uint32_t block) {
 }
 
 /// Seek forward in the inverted list to locate and decode the block containing the docID we need.
-void InvertedListIterator::forward_seek(uint32_t search_docId) {
+/// The shallow parameter controls whether the target block will be decompressed. For shallow=True
+/// this is equivalent to BMW's shallowNext operator.
+void InvertedListIterator::forward_seek(uint32_t search_docId, bool shallow) {
 
 	int32_t res = 0;
 	uint32_t blk_size = this->block_size;
@@ -196,7 +232,10 @@ void InvertedListIterator::forward_seek(uint32_t search_docId) {
 
 				// printf("\n\t\tEnd of block reached while searching for docID %d - ", search_docId);
 				// printf("Decompressing block %d...\n", this->cur_block);
-				this->decode_docIDs(this->cur_block);
+				if (!shallow) {
+					this->decode_docIDs(this->cur_block);
+					this->block_decoded_freq = false;
+				}
 			}
 		}
 	}
@@ -237,6 +276,15 @@ bool InvertedListIterator::next() {
 	}
 
 	return true;
+}
+
+void InvertedListIterator::next_shallow(uint32_t did) {
+	class InvertedList *il = this->inv_list;
+	if (il->get_num_postings() > this->block_size) {
+		while (did > il->skip_table[this->cur_block].last) {
+			this->cur_block++;
+		}
+	}
 }
 
 /// Given a document ID, perform a binary search on the skip table to locate the respective block.
@@ -286,17 +334,25 @@ inline bool InvertedListIterator::is_exhausted() {
 
 inline void InvertedListIterator::clear() {
 	memset(this->dec_docIDs, 0, this->block_size * sizeof(uint32_t));
-	memset(this->dec_dfreqs, 0, this->block_size * sizeof(uint32_t));
+	memset(this->dec_dscors, 0, this->block_size * sizeof(uint32_t));
 
 	this->cur_docID = NULL;
 	this->final_docID = 0;
 	this->cur_block = 0;
 	this->cur_offset = 0;
 	this->block_decoded_freq = false;
-
-//	this->inv_list->clear();
 }
 
+/// Accessors
 inline uint32_t InvertedListIterator::get_cur_docID() { return *(this->cur_docID); }
+inline uint32_t InvertedListIterator::get_final_docID() { return this->final_docID; }
 inline uint32_t InvertedListIterator::get_freq() { return this->inv_list->get_num_postings(); }
+inline uint32_t InvertedListIterator::get_cur_block() { return this->cur_block; }
+inline uint32_t InvertedListIterator::get_cur_offset() { return this->cur_offset; }
+inline uint32_t InvertedListIterator::get_num_blocks() { return this->num_blocks; }
+inline uint32_t InvertedListIterator::get_num_postings() { return this->inv_list->num_postings; }
+
+void InvertedListIterator::display_skip_table(uint32_t block_size) {
+	this->inv_list->display_skip_table(block_size);
+}
 #endif

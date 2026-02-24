@@ -1,18 +1,20 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// Entity Header File: An object used to store a single entity
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Entity header file: An object used to store a single entity
 
-#ifndef ICDS_ENTITY_H
-#define ICDS_ENTITY_H
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_ENTITY_H
+#define ICDR_ENTITY_H
 
 class Entity {
 	uint32_t id;
 	char * code;
 	uint32_t num_alloc_matching_records;
 	uint32_t num_matching_records;
-	uint32_t *matching_records;
+	uint32_t * matching_records;
 	class Entity * next;
 
 	public:
@@ -35,6 +37,8 @@ class Entity {
 		uint32_t get_num_matching_records();
 		uint32_t get_num_alloc_matching_records();
 		class Entity * get_next();
+
+		uint32_t get_footprint();
 };
 
-#endif //ICDS_ENTITY_H
+#endif //ICDR_ENTITY_H

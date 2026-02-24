@@ -1,11 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// BitVector Implementation File: A vector used to compress integers
-/// Leonidas Akritidis, November 10th, 2011
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+BitVector Implementation File: A vector used to compress integers
 
-#ifndef ICDS_BITVECTOR_CPP
-#define ICDS_BITVECTOR_CPP
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_BITVECTOR_CPP
+#define ICDR_BITVECTOR_CPP
 
 #include "BitVector.h"
 

@@ -1,12 +1,14 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// Lexicon Implementation File: A hast table that stores the distinct words (i.e. Word objects)
-/// of a document collection.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Lexicon implementation file: A hash table that stores the distinct words (i.e. Word objects) of
+a document collection.
 
-#ifndef ICDS_LEXICON_CPP
-#define ICDS_LEXICON_CPP
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_LEXICON_CPP
+#define ICDR_LEXICON_CPP
 
 #include "Lexicon.h"
 
@@ -23,8 +25,6 @@ Lexicon::Lexicon(class InputParams * pr) {
 	this->num_words = 0;
 	this->num_chains = 0;
 	this->tslots = TableSize;
-	this->mask = TableSize - 1;
-	this->footprint = TableSize * sizeof(Word*);
 	this->compression_block_size = pr->get_compression_block_size();
 }
 
@@ -82,7 +82,7 @@ uint32_t Lexicon::KazLibHash(char *key) {
 }
 
 /// The JZ Hash Function (https://github.com/blindchimp/kazlib)
-uint32_t Lexicon::JZHash(char* key, uint32_t len) {
+uint32_t Lexicon::JZHash(char * key, uint32_t len) {
 	/// hash = hash XOR ((left shift L bits) AND (right shift R bits) AND key value)
 	uint32_t hash = 1315423911;
 	uint32_t i = 0;
@@ -103,10 +103,11 @@ uint32_t Lexicon::insert(uint32_t d, char * t) {
 	}
 
 	/// Find the hash value of the input term
-	uint32_t HashValue = this->djb2(t) & this->mask;
+	uint32_t HashValue = this->djb2(t) & (this->tslots - 1);
 
 	/// Now search in the hash table to check whether this term exists or not
 	if (this->hash_table[HashValue] != NULL) {
+		this->ColissionCount++;
 		class Word *q, *p;
 		p = this->hash_table[HashValue];
 
@@ -149,17 +150,21 @@ uint32_t Lexicon::insert(uint32_t d, char * t) {
 	wrd->next = this->hash_table[HashValue];
 	this->hash_table[HashValue] = wrd;
 
+	//this->footprint += sizeof(Word) + (strlen(t) + 1) * sizeof(char) +
+	//	sizeof(InvertedList) + 2 * wrd->get_ivl()->get_num_alloc_postings() * sizeof(uint32_t);
+
 	return 1;
 }
 
 /// Insert the word t in the hash table and associate a posting for the document d.
 /// Return 1 upon success, 0 otherwise
-uint32_t Lexicon::insert(char * t, class InvertedList * ivl) {
+uint32_t Lexicon::insert(char * t, score_t idf, class InvertedList * ivl) {
 	/// Find the hash value of the input term
-	uint32_t HashValue = this->djb2(t) & this->mask;
+	uint32_t HashValue = this->djb2(t) & (this->tslots - 1);
 
 	/// Now search in the hash table to check whether this term exists or not
 	if (this->hash_table[HashValue] != NULL) {
+		this->ColissionCount++;
 		class Word *q;
 
 		/// Traverse the linked list that represents the chain.
@@ -179,7 +184,14 @@ uint32_t Lexicon::insert(char * t, class InvertedList * ivl) {
 	/// Create a new posting and re-assign the linked list's head
 	class Word * wrd = new Word();
 	wrd->set_word_string(t);
+	wrd->set_idf(idf);
 	wrd->set_ivl(ivl);
+
+	//this->footprint += sizeof(Word) + (strlen(t) + 1) * sizeof(char) +
+	//	sizeof(InvertedList) + (ivl->get_dwrd() + ivl->get_swrd()) * sizeof(uint32_t);
+	//if (ivl->get_num_postings() > this->compression_block_size) {
+	//	this->footprint += ivl->get_num_blocks(this->compression_block_size) * ivl->get_list_block_size();
+	//}
 
 	/// Reassign the chain's head
 	wrd->next = this->hash_table[HashValue];
@@ -189,14 +201,19 @@ uint32_t Lexicon::insert(char * t, class InvertedList * ivl) {
 }
 
 /// Compress the inverted lists that are associated to the Lexicon nodes.
-void Lexicon::compress_index() {
+void Lexicon::compress_index(class Records * recs) {
+	float idf = 0.0;
 	class Word * q;
+	uint32_t num_records = recs->get_num_records();
 
 	for (uint32_t i = 0; i < this->tslots; i++) {
 		if (this->hash_table[i] != NULL) {
 			for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
-				// printf("Word: %s -- ", q->get_word_string());
-				q->compress_list(this->compression_block_size);
+				idf = log( (num_records - q->get_freq() + 0.5f) / (q->get_freq() + 0.5f) + 1.0f);
+				// idf = log10((score_t)num_records / (score_t)q->get_freq());
+				q->set_idf(idf);
+				q->compress_list(this->compression_block_size, recs);
+				// printf("Word: %s, freq: %d, idf: %5.3f\n -- ", q->get_str(), q->get_freq(), idf);
 				// q->display(); getchar();
 			}
 		}
@@ -228,7 +245,8 @@ void Lexicon::write_index(FILE * fp) {
 /// Read the inverted index from disk.
 void Lexicon::read_index(FILE * fp, uint32_t block_size) {
 	uint32_t tl = 0;
-	ssize_t nread = 0;
+	score_t idf = 0.0;
+	size_t nread = 0;
 
 	if (fp) {
 		while (!feof(fp)) {
@@ -241,21 +259,18 @@ void Lexicon::read_index(FILE * fp, uint32_t block_size) {
 
 			nread = fread(term, sizeof(char), tl, fp);
 			term[tl] = 0;
+			nread = fread(&idf, sizeof(score_t), 1, fp);
 
 			class InvertedList * ivl = new InvertedList();
 			ivl->read(fp);
 
-			this->insert(term, ivl);
+			this->insert(term, idf, ivl);
 		}
 	} else {
 		delete this;
 		printf("Error opening index file for reading, aborting..."); fflush(NULL);
 		exit(-1);
 	}
-}
-
-/// Decompress the (compressed) inverted lists that are associated to the Lexicon nodes.
-void Lexicon::decompress_index() {
 }
 
 /// Flush the lexicon's content to memory
@@ -267,16 +282,45 @@ void Lexicon::display() {
 			for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
 				q->display();
 				printf("\n");
-//				getchar();
 			}
 		}
 	}
 }
 
+/// Compute the index statistics
+void Lexicon::compute_stats() {
+	uint32_t footprint = sizeof(Lexicon) + this->tslots * sizeof(Word *);
+	class Word * q;
+
+	for (uint32_t i = 0; i < this->tslots; i++) {
+		if (this->hash_table[i] != NULL) {
+			for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
+				footprint += q->get_footprint(this->compression_block_size);
+			}
+		}
+	}
+
+	printf(" === Inverted file statistics ===================== \n");
+	printf("\tMemory footprint: %5.2f MB\n", footprint / 1048576.0f);
+	printf(" ================================================== \n\n");
+
+	this->display_hash_table_performance();
+}
+
+void Lexicon::display_hash_table_performance() {
+	printf(" === Lexicon hash table statistics ================ \n");
+	printf("\tTable size (slots): %d\n", this->tslots);
+	printf("\tNum keys: %d\n", this->num_words);
+	printf("\tNum chains: %d\n", this->num_chains);
+	printf("\tAvg chain length: %5.1f\n", (float)this->num_words / (float)this->num_chains);
+	printf("\tNum collisions: %d\n", this->ColissionCount);
+	printf(" ================================================== \n\n");
+}
+
 /// Query Processing: Search the lexicon for a given term.
 class Word * Lexicon::search(char * t) {
 	/// Find the hash value of the input term
-	uint32_t HashValue = this->djb2(t) & this->mask;
+	uint32_t HashValue = this->djb2(t) & (this->tslots - 1);
 
 	/// Now search in the hash table to check whether this term exists or not
 	if (this->hash_table[HashValue] != NULL) {
@@ -289,7 +333,7 @@ class Word * Lexicon::search(char * t) {
 			}
 		}
 	}
-	printf("term was NOT found! : %s\n", t);
+	printf("The term '%s' was NOT found in the Lexicon!\n", t);
 	return NULL;
 }
 

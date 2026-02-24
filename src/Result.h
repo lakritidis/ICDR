@@ -1,11 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// Result Header File: An object used to represent the result object of a query.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Result header file: An object used to represent the result object of a query.
 
-#ifndef RESULT_H
-#define RESULT_H
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_RESULT_H
+#define ICDR_RESULT_H
 
 class Result {
 	uint32_t docID;
@@ -23,6 +25,7 @@ class Result {
 		~Result();
 
 		void destroy();
+		void display();
 
 		uint32_t get_docID();
 		char * get_text();
@@ -31,4 +34,4 @@ class Result {
 		void set_score(double);
 };
 
-#endif // RESULT_H
+#endif // ICDR_RESULT_H

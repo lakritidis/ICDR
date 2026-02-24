@@ -1,11 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// BitVector Header File: A vector used to compress integers
-/// Leonidas Akritidis, November 10th, 2011
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+BitVector header file: A vector used to compress integers
 
-#ifndef ICDS_BITVECTOR_H
-#define ICDS_BITVECTOR_H
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_BITVECTOR_H
+#define ICDR_BITVECTOR_H
 
 template <class T> class BitVector {
 	private:

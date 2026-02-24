@@ -1,12 +1,14 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// InputData Implementation File: An object used to store parameters, and provide access to the
-/// Records and the Entities
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+InputData implementation file: An object used to store parameters and provide access to Records
+and Entities.
 
-#ifndef ICDS_INPUTDATA_CPP
-#define ICDS_INPUTDATA_CPP
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_INPUTDATA_CPP
+#define ICDR_INPUTDATA_CPP
 
 #include "InputData.h"
 
@@ -28,21 +30,27 @@ class Lexicon * InputData::build_index() {
 	char * input_data;
 	long file_size = 0;
 
+	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+
 	FILE * datafile = fopen(this->params->get_input_data_file(), "r");
 	class Lexicon * lex = NULL;
 	if (datafile) {
 		input_data = this->read_file(datafile, &file_size);
 		this->process_data(input_data, file_size);
 
-		// this->entities->display();
 		lex = this->construct_index();
 
 		free(input_data);
 		fclose(datafile);
 	} else {
-		printf("Error Opening Input File %s\n", this->params->get_input_data_file());
-		exit(0);
+		fprintf(stderr, "Error Opening Input File %s\n", this->params->get_input_data_file());
+		exit(-1);
 	}
+
+	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+	printf("Index construction completed in %5.3f sec.\n",
+		std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count() / 1000.0f);
+
 	return lex;
 }
 
@@ -107,14 +115,15 @@ class Lexicon * InputData::construct_index() {
 		rec->set_uword_len(num_uwords);
 	}
 
-	lex->compress_index();
-
 	this->records->set_total_num_words( total_num_words );
+
+	lex->compress_index(this->records);
 
 	/// Commenting that creates a memory leak.
 	/// However, it also allows us to output the Lexicon to the Python lib. The user is responsible
 	/// for dealloacting that via a manual invocation of "destroy".
 	// delete lex;
+	// lex->display_hash_table_performance();
 	return lex;
 }
 
@@ -124,7 +133,7 @@ void InputData::process_data(char * input_data, uint32_t len) {
 	char buf[16384], record_title[16384], entity_code[16384];
 
 	this->records = new Records(128);
-	this->entities = new Entities(1048576);
+	this->entities = new Entities(1000003);
 
 	for (i = 0; i < len; i++) {
 		/// A comma character was found
@@ -173,24 +182,37 @@ char * InputData::read_file(FILE * source, long * file_size) {
 	return out;
 }
 
-/// Process an input query and return an array Result objects
-class Result * InputData::process_query(char * q_str, class Lexicon * lex, class Entities * ents,
-	class Records * records, uint32_t * retrieved_results) {
+/// Process an input query and return an array Result objects. If rec_id = 0 then, process the
+/// query q like a typical search engine. If rec_id > 0, make q = rec_title and retrieve samples
+/// that are negative to rec_id.
+class Result * InputData::process_query(char * q_str, uint32_t rec_id, class Lexicon * lex,
+	class Entities * ents, class Records * records, uint32_t * retrieved_results) {
 		class Result * results = NULL;
 
 		this->entities = ents;
 		this->records = records;
 
+		/// For negative sampling, make the query string equal to the text of the Record for
+		/// which we are performing negative sampling. Otherwise, q is user-defined.
+		if (rec_id > 0) {
+			class Record * Rec = records->get_record(rec_id - 1);
+			q_str = new char[strlen(Rec->get_text()) + 1];
+			strcpy(q_str, Rec->get_text());
+		}
+
 		class Query * q = new Query(q_str, this->params, lex, this->records);
-		if (this->params->get_query_processing_algorithm() == 2) {
-		} else {
-			results = q->process_DAAT();
+		if (this->params->get_query_processing_algorithm() == 1) {
+			results = q->process_BMW(rec_id);
+		} else if (this->params->get_query_processing_algorithm() == 2) {
+			results = q->process_DAAT(rec_id);
 		}
 
 		*retrieved_results = q->get_num_results();
 
 		delete q;
-
+		if (rec_id > 0) {
+			delete [] q_str;
+		}
 		return results;
 }
 

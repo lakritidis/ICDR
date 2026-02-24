@@ -1,12 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// InputData Header File: An object used to store parameters, and provide access to the
-/// Records and the Entities
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+InputData header file: An object used to store parameters and provide access to Records and Entities
 
-#ifndef ICDS_INPUTDATA_H
-#define ICDS_INPUTDATA_H
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_INPUTDATA_H
+#define ICDR_INPUTDATA_H
 
 class InputData {
 	InputParams * params;
@@ -23,7 +24,8 @@ class InputData {
 		~InputData();
 
 		class Lexicon * build_index();
-		class Result * process_query(char *, class Lexicon *, class Entities *, class Records *, uint32_t *);
+		class Result * process_query(char *, uint32_t,
+			class Lexicon *, class Entities *, class Records *, uint32_t *);
 
 		class InputParams * get_params();
 		class Records * get_records();
@@ -31,4 +33,4 @@ class InputData {
 };
 
 
-#endif // ICDS_INPUTDATA_H
+#endif // ICDR_INPUTDATA_H

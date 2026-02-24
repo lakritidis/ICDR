@@ -1,16 +1,16 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// Entities Header File: A hash table that accommodates distinct entities.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Entities header file: A hash table that accommodates distinct entities.
 
-#ifndef ICDS_ENTITIES_H
-#define ICDS_ENTITIES_H
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_ENTITIES_H
+#define ICDR_ENTITIES_H
 
 class Entities {
 	class Entity ** hash_table;
-	class Entity ** table;
-	uint32_t mask;
 	uint32_t num_slots;  /// The number of slots of the hash table
 	uint32_t num_nodes;	 /// The number of elements stored in the hash table.
 	uint32_t num_chains; /// The number of non-empty chains.
@@ -26,12 +26,18 @@ class Entities {
 		~Entities();
 
 		class Entity * insert(char *, uint32_t);
+		class Entity * get_entity(char *);
 		void insert(class Entity *);
 		void write(FILE *);
 		void read(FILE *);
-		void convert_to_array();
 		void display();
-		void display_list();
+		void compute_stats();
+
+		/// Accessors
+		uint32_t get_num_chains();
+		uint32_t get_num_slots();
+		uint32_t get_num_nodes();
+		class Entity * get_table_entry(uint32_t);
 };
 
-#endif // ICDS_ENTITIES_H
+#endif // ICDR_ENTITIES_H

@@ -1,11 +1,14 @@
-/// ICDS: Index-Assisted Contrastive Data Synthesizer
+/**
+ICDR: Index-Assisted Contrastive Data Synthesizer
 
-/// Query Implementation File: An object used to represent a query.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Query implementation file: An object used to represent an input query. Implements various
+query processing algorithms.
 
-#ifndef ICDS_QUERY_CPP
-#define ICDS_QUERY_CPP
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_QUERY_CPP
+#define ICDR_QUERY_CPP
 
 #include "Query.h"
 
@@ -13,7 +16,7 @@
 Query::Query() :
 	query_string(NULL),
 	num_terms(0),
-	query_terms(NULL),
+	query_terms(),
 	num_results(0),
 	qparams(NULL),
 	doc_info(NULL) {
@@ -23,7 +26,7 @@ Query::Query() :
 Query::Query(char * q, class InputParams * params, class Lexicon * lex, class Records * recs) :
 	query_string(NULL),
 	num_terms(0),
-	query_terms(NULL),
+	query_terms(),
 	num_results(0),
 	qparams(params),
 	doc_info(recs) {
@@ -66,16 +69,12 @@ Query::Query(char * q, class InputParams * params, class Lexicon * lex, class Re
 					}
 				}
 				term[y] = 0;
-
-				insert_term(term, y, lex);
-
+				if (y > params->get_min_term_length()) {
+					this->insert_term(term, y, lex);
+				}
 				old_pos = new_pos;
 			}
 		}
-
-		/// Sort the words array in ascending frequency order. The first element of the array is
-		/// now the less frequent term, whereas its last element contains the most frequent term.
-		qsort(this->query_terms, (size_t)(this->num_terms), sizeof(QueryWord**), Query::compare);
 }
 
 /// Destructor
@@ -85,14 +84,8 @@ Query::~Query() {
 		this->query_string = NULL;
 	}
 
-	if (this->query_terms) {
-		for (uint32_t i = 0; i < this->num_terms; i++) {
-			if (this->query_terms[i]) {
-				delete this->query_terms[i];
-			}
-		}
-		free(this->query_terms);
-		this->query_terms = NULL;
+	for (uint32_t i = 0; i < this->query_terms.size(); i++) {
+		delete this->query_terms[i];
 	}
 }
 
@@ -103,47 +96,31 @@ uint32_t Query::insert_term(char * tm, uint32_t l, class Lexicon * lex) {
 	}
 
 	uint32_t i = 0;
-	bool term_exists = false;
 	class Word *temp;
-	score_t idf = 0.0;
 
 	/// Check if the term is already in the qterms array.
 	for (i = 0; i < this->num_terms; i++) {
 		if (strcmp(this->query_terms[i]->get_str(), tm) == 0) {
-			term_exists = true;
-			break;
+			return 1;
 		}
 	}
 
-	/// The term doesn't exist in the qterms array, so add it.
-	if (!term_exists) {
-
-		/// Search into the lexicon to obtain information related to the term (term frequency
-		/// and address of the inverted list)
-		temp = lex->search(tm);
-
-		if (temp) {
-			if (this->num_terms == 0) {
-				this->query_terms = (class QueryWord **)malloc(sizeof(class QueryWord *));
-			} else {
-				this->query_terms = (class QueryWord **)realloc(this->query_terms,
-					(this->num_terms + 1) * sizeof(class QueryWord *));
-			}
-
-			idf = log10 ( (score_t) this->doc_info->get_num_records() / (score_t) temp->get_ivl()->get_num_postings() );
-
-			this->query_terms[this->num_terms] = new QueryWord(temp, this->qparams->get_compression_block_size());
-			this->query_terms[this->num_terms]->set_idf(idf);
-			this->num_terms++;
-		}
+	/// Search into the lexicon to obtain information related to the term (term frequency
+	/// and address of the inverted list)
+	temp = lex->search(tm);
+	if (temp) {
+		QueryWord * qTerm = new QueryWord(temp, this->qparams->get_compression_block_size());
+		qTerm->set_idf(temp->get_idf());
+		this->query_terms.push_back(qTerm);
+		this->num_terms++;
 	}
+
 	return 1;
 }
 
-
 /// Checks if any of the query terms involved inverted lists is exhausted (i.e. we have checked all
-/// the postings of the list). This flag signals the query processing termination (in case of
-/// exhaustive evaulation)
+/// the postings of the list). This flag signals the query processing termination (in case of an
+/// exhaustive evaluation).
 bool Query::lists_exhausted() {
 	for (uint32_t i = 0; i < this->num_terms; i++) {
 		if (this->query_terms[i]->get_ivl_it()->is_exhausted()) {
@@ -153,8 +130,7 @@ bool Query::lists_exhausted() {
 	return false;
 }
 
-
-/// This function returns which docID among those we are currently examining is the maximal
+/// Returns the maximum docID among those we are currently examining (cur_docIDs).
 uint32_t Query::max_docID() {
 	class InvertedListIterator * itr;
 	uint32_t max_id = this->query_terms[0]->get_ivl_it()->get_cur_docID();
@@ -169,8 +145,7 @@ uint32_t Query::max_docID() {
 	return max_id;
 }
 
-
-/// This function returns which docID among those we are currently examining is the minimal
+/// Returns the minimum docID among those we are currently examining (cur_docIDs).
 uint32_t Query::min_docID () {
 	class InvertedListIterator * itr;
 	uint32_t min_id = this->query_terms[0]->get_ivl_it()->get_cur_docID();
@@ -186,15 +161,12 @@ uint32_t Query::min_docID () {
 }
 
 /// Evaluate a document according to BM25 by summing the contribution of each term
-void Query::score_BM25(uint32_t docID, class MaxHeap *heap) {
+void Query::score_BM25(uint32_t docID, class MaxHeap<Result> * heap) {
 	uint32_t i = 0, doc_len = 0;
-	score_t score = 0.0, K = 0.0, avg_doc_len = this->doc_info->get_avg_doc_len();
-
-	/// BM25 Hyper-parameters
-	score_t BM25_k1_PARAM = 1.2, BM25_k2_PARAM = 2.0, BM25_b_PARAM = 0.9;
+	score_t score = 0.0f, K = 0.0f, avg_doc_len = this->doc_info->get_avg_doc_len();
 
 	/// Retrieve the document length, the average document length and the corpus size.
-	doc_len = this->doc_info->get_record(docID)->get_word_len();
+	doc_len = this->doc_info->get_record(docID - 1)->get_word_len();
 
 	K = BM25_k2_PARAM * ( 1 - BM25_b_PARAM + (( BM25_b_PARAM * doc_len ) / avg_doc_len ));
 
@@ -205,8 +177,7 @@ void Query::score_BM25(uint32_t docID, class MaxHeap *heap) {
 
 	/// Sum the contribution of each term
 	for (i = 0; i < this->num_terms; i++) {
-		score += this->query_terms[i]->get_ivl_it()->
-			eval_posting_BM25(K, this->query_terms[i]->get_idf(), BM25_k1_PARAM);
+		score += this->query_terms[i]->get_ivl_it()->eval_posting_BM25(K, this->query_terms[i]->get_idf());
 	}
 
 	res->set_score(score);
@@ -220,32 +191,44 @@ void Query::score_BM25(uint32_t docID, class MaxHeap *heap) {
 }
 
 /// Document-At-A-Time Query Processing
-class Result * Query::process_DAAT() {
-
-	uint32_t i = 0, dmax = 0;
-//	printf("block size: %d", this->qparams->get_compression_block_size());
+class Result * Query::process_DAAT(uint32_t neg_docID) {
+	// printf("\n=== DAAT QUERY PROCESSING (%d requested results)===\n", this->qparams->get_num_req_results());
+	uint32_t t = 0, dmax = 0;
 	bool proceed;
 	class InvertedListIterator * list_iterator;
 	class Result * r = NULL;
 	class Result * res = NULL;
+	score_t max_score_lists = 0.0f, max_score_th = 0.0f;
 
 	if (this->num_terms > 0) {
+		/// Sort the words array in ascending frequency order. The first element of the array is
+		/// now the less frequent term, whereas its last element contains the most frequent term.
+		sort(this->query_terms.begin(), this->query_terms.end(),
+			[](const QueryWord * a, const QueryWord * b) {
+				return a->get_c_ivl_it()->get_freq() > b->get_c_ivl_it()->get_freq();
+			});
+
 		res = new Result [this->qparams->get_num_req_results()];
 
 		/// Initialize scoring heap. This structure stores the best documents near its head.
-		class MaxHeap *pq = new MaxHeap(this->query_terms[0]->get_ivl_it()->get_freq(), 200);
+		class MaxHeap<Result> *pq = new MaxHeap<Result>(this->query_terms[0]->get_ivl_it()->get_freq());
 
 		/// ///////////////////////////////////////////////////////////////////////////////////////
 		/// Phase 1: Decompress the first blocks of the inverted lists of all query terms. In case
 		/// the term is short, (i.e. only one block exists) the buffers contain the entire list.
 		/// ///////////////////////////////////////////////////////////////////////////////////////
-		for (i = 0; i < this->num_terms; i++) {
-			//printf("\nDecompressing block 0 for Term %d: %s, Frequency: %d. List Blocks: %d\n", i + 1,
-			//	this->query_terms[i]->get_str(), this->query_terms[i]->get_freq(),
-			//	this->query_terms[i]->get_ivl()->get_num_blocks(block_size));
-			list_iterator = this->query_terms[i]->get_ivl_it();
+		for (t = 0; t < this->num_terms; t++) {
+			list_iterator = this->query_terms[t]->get_ivl_it();
 			list_iterator->decode_docIDs(0);
-			list_iterator->decode_frequencies(0);
+			list_iterator->decode_scores(0);
+			max_score_lists += list_iterator->get_listMax_score();
+			max_score_th += this->query_terms[t]->get_idf() * (BM25_k1_PARAM + 1);
+
+			//printf("\tDecompressed block 0 ot term %d: %s, Frequency: %d. List Blocks: %d\n", t+1,
+			//	this->query_terms[t]->get_str(), this->query_terms[t]->get_ivl_it()->get_num_postings(),
+			//	this->query_terms[t]->get_ivl_it()->get_num_blocks());
+			//list_iterator->display_skip_table(this->qparams->get_compression_block_size());
+
 		}
 
 		/// ///////////////////////////////////////////////////////////////////////////////////////
@@ -260,10 +243,10 @@ class Result * Query::process_DAAT() {
 			//	this->query_terms[0]->get_ivl_it()->get_cur_docID(), this->query_terms[1]->get_ivl_it()->get_cur_docID(),
 			//	this->query_terms[2]->get_ivl_it()->get_cur_docID(), dmax);
 
-			for (i = 0; i < this->num_terms; i++) {
-				list_iterator = this->query_terms[i]->get_ivl_it();
+			for (t = 0; t < this->num_terms; t++) {
+				list_iterator = this->query_terms[t]->get_ivl_it();
 				// printf("\tList: %d - Seeking forward for docID = %d ... ", i, dmax);
-				list_iterator->forward_seek(dmax);
+				list_iterator->forward_seek(dmax, false);
 				if (list_iterator->get_cur_docID() > dmax) {
 					dmax = list_iterator->get_cur_docID();
 				}
@@ -275,8 +258,8 @@ class Result * Query::process_DAAT() {
 				/// This is a candidate result. Compute document's score here.
 				score_BM25(dmax, pq);
 
-				for (i = 0; i < this->num_terms; i++) {
-					proceed = this->query_terms[i]->get_ivl_it()->next();
+				for (t = 0; t < this->num_terms; t++) {
+					proceed = this->query_terms[t]->get_ivl_it()->next();
 					if (!proceed) {
 						break;
 					}
@@ -302,8 +285,8 @@ class Result * Query::process_DAAT() {
 
 		delete pq;
 
-		for (i = 0; i < this->num_terms; i++) {
-			this->query_terms[i]->get_ivl_it()->clear();
+		for (t = 0; t < this->num_terms; t++) {
+			this->query_terms[t]->get_ivl_it()->clear();
 		}
 	} else {
 		this->num_results = 0;
@@ -312,161 +295,200 @@ class Result * Query::process_DAAT() {
 	return res;
 }
 
+/// BlockMaxWAND (BMW) Query Processing
+class Result * Query::process_BMW(uint32_t neg_docID) {
+	// printf("\n=== BMW QUERY PROCESSING (%d requested results)===\n", this->qparams->get_num_req_results());
+	int32_t pivot = -1, matched = 0;
+	uint32_t t = 0, cand_docID = 0, d = 0, n_terms = 0, negative_entity = 0;
 
-/// simd
-/**
-struct Block {
-    docIDs[BLOCK_SIZE]          // sorted
-    tf[BLOCK_SIZE]              // term frequency
-    block_max_score             // max possible BM25 score (term) within this block
+	class InvertedListIterator * list_iterator;
+	class Result * r = NULL, *res = NULL;
+	class QueryWord * pivotTerm = NULL;
+	score_t score = 0.0f, ub_sum = 0.0f, min_threshold = 0.0f, max_threshold = 0.0f;
+	score_t max_score_lists = 0.0f, max_score_th = 0.0f;
+
+	if (this->num_terms > 0) {
+		if (neg_docID > 0) {
+			negative_entity = this->doc_info->get_record(neg_docID - 1)->get_matching_entity()->get_id();
+		}
+		res = new Result[this->qparams->get_num_req_results()];
+
+		/// Initialize scoring heap. This structure stores the best documents near its head.
+		class MinHeap<Result> *pq = new MinHeap<Result>(this->qparams->get_num_req_results());
+
+		/// ///////////////////////////////////////////////////////////////////////////////////////
+		/// Phase 1: Decompress the first blocks of the inverted lists of all query terms. In case
+		/// the term is short, (i.e. only one block exists) the buffers contain the entire list.
+		/// ///////////////////////////////////////////////////////////////////////////////////////
+		for (t = 0; t < this->num_terms; t++) {
+			list_iterator = this->query_terms[t]->get_ivl_it();
+			list_iterator->decode_docIDs(0);
+			list_iterator->decode_scores(0);
+			max_score_lists += list_iterator->get_listMax_score();
+			max_score_th += this->query_terms[t]->get_idf() * (BM25_k1_PARAM + 1);
+
+			//printf("\tDecompressed block 0 ot term %d: %s, Frequency: %d. List Blocks: %d\n", t+1,
+			//	this->query_terms[t]->get_str(), this->query_terms[t]->get_ivl_it()->get_num_postings(),
+			//	this->query_terms[t]->get_ivl_it()->get_num_blocks());
+			//list_iterator->display_skip_table(this->qparams->get_compression_block_size());
+		}
+
+		max_threshold = max_score_lists * this->qparams->get_max_sim();
+		min_threshold = max_score_lists * this->qparams->get_min_sim();
+		//printf("\tMax Possible Score: %5.3f, Max Theoretical Bound: %5.3f\n", max_score_lists, max_score_th);
+		//printf("\tMin Threshold: %5.3f, Max Threshold: %5.3f\n", min_threshold, max_threshold);
+
+		for (;;) {
+			// printf("\nNext iteration\n");
+
+			/// Remove the query terms for which the inverted list has been exhausted.
+			n_terms = this->num_terms;
+			for (t = 0; t < n_terms; t++) {
+				list_iterator = this->query_terms[t]->get_ivl_it();
+				if (list_iterator->is_exhausted()) {
+					// printf("\tTerm %d (%s) list has been exhausted at docID = %d", t,
+					//	this->query_terms[t]->get_str(), list_iterator->get_cur_docID());
+					delete this->query_terms[t];
+					this->query_terms[t] = this->query_terms.back();
+					this->query_terms.pop_back();
+					this->num_terms--;
+					//this->display_query_terms();
+				}
+			}
+
+			/// Sort the remaining query terms in increasing current docID order.
+			sort(this->query_terms.begin(), this->query_terms.end(),
+				[](const QueryWord * a, const QueryWord * b) {
+					return a->get_c_ivl_it()->get_cur_docID() < b->get_c_ivl_it()->get_cur_docID();
+				});
+			// this->display_query_terms();
+
+			/// Pivoting step by using the block max scores (BMW)
+			/// Update the threshold here
+			if (!pq->is_empty()) {
+				min_threshold = pq->get_head()->get_score();
+			}
+
+			ub_sum = 0.0f;
+			pivot = -1;
+			for (t = 0; t < this->num_terms; t++) {
+				list_iterator = this->query_terms[t]->get_ivl_it();
+				if (list_iterator->get_cur_block() >= list_iterator->get_num_blocks()) {
+					getchar();
+					return res;
+				}
+
+				ub_sum += list_iterator->get_cur_blockMax_score();
+				if (ub_sum >= min_threshold) {
+					pivot = t;
+					break;
+				}
+			}
+
+			/// No pivot term has been found. No documents can beat the minimum, so terminate early.
+			if (pivot == -1) {
+				//printf("Pivot=-1, ub_sum=%5.3f, thres=%5.3f, early termination...", ub_sum, min_threshold);
+				break;
+			}
+			pivotTerm = this->query_terms[pivot];
+			cand_docID = pivotTerm->get_ivl_it()->get_cur_docID();
+			// if (cand_docID >= pivotTerm->get_ivl_it()->get_final_docID()) { break; }
+
+			//printf("Pivot %d (%s), DocID=%d, ub_sum=%5.3f, threshold=%5.3f\n",
+			//		pivot, pivotTerm->get_str(), cand_docID, ub_sum, min_threshold);
+
+			/// If the smallest cur_docID is already >= candidate, then check the candidate.
+			if (this->query_terms[0]->get_ivl_it()->get_cur_docID() == cand_docID) {
+				score = 0.0f;
+				matched = 0;
+
+				for (t = 0; t < this->num_terms; t++) {
+					list_iterator = this->query_terms[t]->get_ivl_it();
+					d = list_iterator->get_cur_docID();
+					if (d < cand_docID) {
+						list_iterator->forward_seek(cand_docID, false);
+						d = list_iterator->get_cur_docID();
+					}
+					if (d == cand_docID) {
+						score += list_iterator->get_cur_score();
+						matched++;
+						//printf("\t\tCand DocID: %d in list %d: BM25 Score=%5.3f\n", cand_docID, t, score);
+					}
+				}
+
+				if (matched > 0 && score >= min_threshold && score <= max_threshold) {
+					if (negative_entity != this->doc_info->get_record(cand_docID - 1)->get_matching_entity()->get_id()) {
+						pq->insert_replace(score, cand_docID, this->doc_info);
+					}
+				}
+
+				/// Advance all lists past candidate.
+				for (t = 0; t < this->num_terms; t++) {
+					list_iterator = this->query_terms[t]->get_ivl_it();
+					if (list_iterator->get_cur_docID() == cand_docID) {
+						list_iterator->forward_seek(cand_docID + 1, false);
+					}
+				}
+			} else {
+				/// Advance lists with docid < candidate to candidate.
+				for (t = 0; t < this->num_terms; t++) {
+					list_iterator = this->query_terms[t]->get_ivl_it();
+					if (list_iterator->get_cur_docID() < cand_docID) {
+						list_iterator->forward_seek(cand_docID, false);
+					}
+				}
+			}
+		}
+
+		/// ///////////////////////////////////////////////////////////////////////////////////////
+		/// Phase 3: After the list intersection is completed, obtain the best documents from
+		/// the MaxHeap's head. Deallocate all used memory (i.e. MaxHeap, uneeded results, etc.)
+		/// ///////////////////////////////////////////////////////////////////////////////////////
+		this->num_results = 0;
+		while (!pq->is_empty()) {
+
+			r = pq->remove_head();
+
+			/// Keep only the number of requested results and delete the rest of them.
+			if (this->num_results < this->qparams->get_num_req_results()) {
+				res[this->num_results++] = (*r);
+			}
+			delete r;
+		}
+
+		delete pq;
+
+		for (t = 0; t < this->num_terms; t++) {
+			this->query_terms[t]->get_ivl_it()->clear();
+		}
+	} else {
+		this->num_results = 0;
+	}
+
+	return res;
 }
 
-struct PostingList {
-    blocks[]                    // array of blocks
-    current_block_index
-    pointer_within_block
+/// Display the query terms and the current state of the InvertedListIterator during query processing
+void Query::display_query_terms() {
+	class QueryWord * qt = NULL;
+	class InvertedListIterator * it = NULL;
+
+	for (uint32_t i = 0; i < this->num_terms; i++) {
+		qt = this->query_terms[i];
+		it = qt->get_ivl_it();
+
+		printf("\tTerm %d: %s, Freq: %d, CurDocID: %d, CurBlock: %d, CurOffset: %d, BlockMax: %5.3f\n",
+			i, qt->get_str(), it->get_num_postings(), it->get_cur_docID(), it->get_cur_block(), it->get_cur_offset(),
+			it->get_cur_blockMax_score());
+	}
 }
 
-struct QueryTerm {
-    term
-    pl : PostingList
-    ub_global                   // global max contribution
-}
 
-function BM25_RANGE_SIMD_BMW(query_terms, lower_a, upper_b):
-
-    // -------------------------
-    // Preprocessing
-    // -------------------------
-    for qt in query_terms:
-        qt.ub_global ← compute_global_bm25_upper_bound(qt.term)
-        qt.pl.current_block ← 0
-        qt.pl.pointer_within_block ← 0
-
-    results ← empty list
-
-
-    // -------------------------
-    // Main Loop
-    // -------------------------
-    while true:
-
-        // ----------------------------------------------------
-        // 1. Pick pivot block using block max scores (BMW)
-        // ----------------------------------------------------
-        sort(query_terms by qt.pl.current_block’s next docID)
-
-        cumulativeUB ← 0
-        pivot_term ← null
-
-        for qt in query_terms:
-            block ← qt.pl.blocks[qt.pl.current_block]
-            cumulativeUB += block.block_max_score
-            if cumulativeUB >= lower_a:
-                pivot_term ← qt
-                break
-
-        if pivot_term == null:
-            break     // Cannot reach threshold a anymore
-
-
-        // Candidate doc is the earliest doc in pivot block
-        pivot_block ← pivot_term.pl.blocks[pivot_term.pl.current_block]
-        candidate_doc ← pivot_block.docIDs[pivot_term.pl.pointer_within_block]
-
-
-        // ----------------------------------------------------
-        // 2. Align other posting lists to candidate_doc block
-        // ----------------------------------------------------
-        for qt in query_terms:
-            while qt.pl.current_block < len(qt.pl.blocks):
-                block ← qt.pl.blocks[qt.pl.current_block]
-
-                if block.docIDs[block.end - 1] >= candidate_doc:
-                    break
-
-                // Skip entire block using block_max_score pruning
-                if cumulativeUB - block.block_max_score < lower_a:
-                    qt.pl.current_block++
-                else:
-                    break
-
-            // Skip within block
-            qt.pl.pointer_within_block ← lower_bound(
-                block.docIDs, candidate_doc
-            )
-
-            if qt.pl.pointer_within_block == BLOCK_SIZE:
-                qt.pl.current_block++
-                qt.pl.pointer_within_block = 0
-
-                if qt.pl.current_block == len(qt.pl.blocks):
-                    goto END_LOOP
-
-
-        // ----------------------------------------------------
-        // 3. SIMD BM25 scoring of the candidate doc
-        // ----------------------------------------------------
-        exactScore ← 0
-
-        for qt in query_terms:
-
-            block ← qt.pl.blocks[qt.pl.current_block]
-
-            idx ← qt.pl.pointer_within_block
-            if block.docIDs[idx] == candidate_doc:
-
-                // SIMD compute BM25 on a single element:
-                // (using scalar fallback is fine for 1 element but
-                // realistic engines do batch scoring)
-                tf ← block.tf[idx]
-                dl ← block.doc_length[idx]   // pre-packed
-                norm ← 1 - b + b * dl/avgdl
-
-                bm25_contrib ← qt.IDF *
-                    (tf*(k1+1)) /
-                    (tf + k1*norm)
-
-                exactScore += bm25_contrib
-
-
-        // ----------------------------------------------------
-        // 4. Threshold & Range Filtering
-        // ----------------------------------------------------
-        if exactScore >= lower_a:
-
-            if exactScore <= upper_b:
-                append results, (candidate_doc, exactScore)
-
-            // advance all lists positioned at candidate_doc
-            for qt in query_terms:
-                block ← qt.pl.blocks[qt.pl.current_block]
-                if block.docIDs[qt.pl.pointer_within_block] == candidate_doc:
-                    qt.pl.pointer_within_block++
-
-                    if qt.pl.pointer_within_block == BLOCK_SIZE:
-                        qt.pl.current_block++
-                        qt.pl.pointer_within_block = 0
-
-        else:
-            // score didn't reach lower bound, move pivot forward
-            pivot_term.pl.pointer_within_block++
-            if pivot_term.pl.pointer_within_block == BLOCK_SIZE:
-                pivot_term.pl.current_block++
-                pivot_term.pl.pointer_within_block = 0
-
-        // loop until exhaustion
-    END_LOOP:
-
-    return results
-*/
-
-
-/// Comparison function for QuickSorting the qterms array.
-int32_t Query::compare(const void *A, const void *B) {
+/// Comparison function for QuickSorting the qterms array in increasing current docID order.
+int32_t Query::compare_qterms(const void *A, const void *B) {
 	class QueryWord *iA = *(class QueryWord **)A;
 	class QueryWord *iB = *(class QueryWord **)B;
-	return iA->get_ivl_it()->get_freq() - iB->get_ivl_it()->get_freq();
+	return iA->get_ivl_it()->get_cur_docID() - iB->get_ivl_it()->get_cur_docID();
 }
 
 uint32_t Query::get_num_results() { return this->num_results; }

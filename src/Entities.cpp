@@ -1,11 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// Entities Implementation File: A hash table that accommodates distinct Entity objects.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Entities implementation file: A hash table that accommodates distinct Entity objects.
 
-#ifndef ICDS_ENTITIES_CPP
-#define ICDS_ENTITIES_CPP
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_ENTITIES_CPP
+#define ICDR_ENTITIES_CPP
 
 #include "Entity.cpp"
 #include "Entities.h"
@@ -13,8 +15,6 @@
 /// Constructor 1: default
 Entities::Entities() :
 		hash_table(NULL),
-		table(NULL),
-		mask(0),
 		num_slots(0),
 		num_nodes(0),
 		num_chains(0),
@@ -24,8 +24,6 @@ Entities::Entities() :
 /// Constructor 2: overloaded
 Entities::Entities(uint32_t size) :
 		hash_table(new Entity * [size]),
-		table(NULL),
-		mask(size - 1),
 		num_slots(size),
 		num_nodes(0),
 		num_chains(0),
@@ -35,6 +33,7 @@ Entities::Entities(uint32_t size) :
 			}
 }
 
+/// Destructor
 Entities::~Entities() {
 	class Entity * q;
 
@@ -51,18 +50,25 @@ Entities::~Entities() {
 		this->hash_table = NULL;
 	}
 
-	if (this->table) {
-		delete [] this->table;
-		this->table = NULL;
-	}
 	this->num_nodes = 0;
 	this->num_chains = 0;
+}
+
+/// The DJB2 Hash Function (Dan Bernstein)
+uint32_t Entities::djb2(char * str) {
+	unsigned long hash = 5381;
+	int c;
+
+	while ((c = *str++))
+		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+
+	return hash;
 }
 
 /// Insert an element into the hash table
 class Entity * Entities::insert(char * ent_code, uint32_t matching_record_id) {
 	/// Find the hash value of the input term
-	uint32_t HashValue = this->djb2(ent_code) & this->mask;
+	uint32_t HashValue = this->djb2(ent_code) % this->num_slots;
 
 	/// Now search in the hash table to check whether this term exists or not
 	if (this->hash_table[HashValue] != NULL) {
@@ -96,7 +102,7 @@ class Entity * Entities::insert(char * ent_code, uint32_t matching_record_id) {
 void Entities::insert(class Entity * e) {
 	/// Find the hash value of the input term
 	char * ent_code = e->get_code();
-	uint32_t HashValue = this->djb2(ent_code) & this->mask;
+	uint32_t HashValue = this->djb2(ent_code) % this->num_slots;
 
 	/// Now search in the hash table to check whether this term exists or not
 	if (this->hash_table[HashValue] != NULL) {
@@ -120,16 +126,26 @@ void Entities::insert(class Entity * e) {
 	this->hash_table[HashValue] = e;
 }
 
-/// The DJB2 Hash Function (Dan Bernstein)
-uint32_t Entities::djb2(char * str) {
-	unsigned long hash = 5381;
-	int c;
+/// Search for an Entity object in the hash table, given its code.
+class Entity * Entities::get_entity(char * ent_code) {
+	uint32_t HashValue = this->djb2(ent_code) % this->num_slots;
 
-	while ((c = *str++))
-		hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
+	/// Now search in the hash table to check whether this term exists or not
+	if (this->hash_table[HashValue] != NULL) {
+		class Entity * q;
 
-	return hash;
+		/// Traverse the linked list that represents the chain.
+		for (q = this->hash_table[HashValue]; q != NULL; q = q->get_next()) {
+			if (strcmp(q->get_code(), ent_code) == 0) {
+				return q; /// Return and exit
+			}
+		}
+	} else {
+		this->num_chains++;
+	}
+	return NULL;
 }
+
 
 /// Write the Entities to disk
 void Entities::write(FILE * fp) {
@@ -148,9 +164,15 @@ void Entities::write(FILE * fp) {
 void Entities::read(FILE * fp) {
 	uint32_t num_entities = 0;
 	class Entity * q = NULL;
+	size_t nread = 0;
 
 	if (fp) {
-		fread(&num_entities, sizeof(uint32_t), 1, fp);
+		nread = fread(&num_entities, sizeof(uint32_t), 1, fp);
+		if (nread == 0) {
+			fprintf(stderr, "Unexpected end of Entities file\n");
+			exit(-1);
+		}
+
 		// printf("Num entities: %d", num_records); fflush(NULL);
 		for (uint32_t i = 0; i < num_entities; i++) {
 			q = new Entity();
@@ -159,11 +181,12 @@ void Entities::read(FILE * fp) {
 			this->insert(q);
 		}
 	} else {
-		printf("Error reading Entities file..."); fflush(NULL);
+		fprintf(stderr, "Error reading Entities file\n");
+		exit(-1);
 	}
 }
 
-/// Display the items of the MergedList object (hash_table)
+/// Display the stored Entities
 void Entities::display() {
 	class Entity * q;
 	for (uint32_t i = 0; i < this->num_slots; i++) {
@@ -175,11 +198,29 @@ void Entities::display() {
 	}
 }
 
-/// Display the items of the MergedList object (item_list)
-void Entities::display_list() {
-	for (uint32_t i = 0; i < this->num_nodes; i++) {
-		this->table[i]->display();
+/// Compute statistics for the Entities structure
+void Entities::compute_stats() {
+	class Entity * q;
+	uint32_t footprint = sizeof(class Entity **) + this->num_slots * sizeof(class Entity *);
+
+	for (uint32_t i = 0; i < this->num_slots; i++) {
+		if (this->hash_table[i] != NULL) {
+			for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
+				footprint += q->get_footprint();
+			}
+		}
 	}
+
+	printf(" === Entities statistics ========================== \n");
+	printf("\tHash table slots: %d\n", this->num_slots);
+	printf("\tNumber of Entities: %d\n", this->num_nodes);
+	printf("\tMemory footprint: %5.2f MB\n", footprint / 1048576.0f);
+	printf(" ================================================== \n\n");
 }
 
+/// Accessors
+class Entity * Entities::get_table_entry(uint32_t i) { return this->hash_table[i]; }
+uint32_t Entities::get_num_chains() { return this->num_chains; }
+uint32_t Entities::get_num_slots() { return this->num_slots; }
+uint32_t Entities::get_num_nodes() { return this->num_nodes; }
 #endif

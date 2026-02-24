@@ -1,12 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// InputPrams Header File: An object used to store input parameters coming from external
-/// calls.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+InputPrams header file: An object used to store input parameters coming from external calls.
 
-#ifndef ICDS_INPUTPARAMS_H
-#define ICDS_INPUTPARAMS_H
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_INPUTPARAMS_H
+#define ICDR_INPUTPARAMS_H
 
 struct UserParams {
 	char * input_data_file;
@@ -93,4 +94,4 @@ class InputParams {
 };
 
 
-#endif //ICDS_INPUTPARAMS_H
+#endif //ICDR_INPUTPARAMS_H

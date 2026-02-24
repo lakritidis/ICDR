@@ -1,11 +1,13 @@
-/// ICDR: Indexed Contrastive Data Retriever
+/**
+ICDR: Indexed Contrastive Data Retriever
 
-/// Records Implementation File: An array that accommodates distinct Record objects.
-/// Leonidas Akritidis, October 16th, 2025
-/// //////////////////////////////////////////////////////////////////////////////////////////////
+Records implementation file: An array that accommodates distinct Record objects.
 
-#ifndef ICDS_RECORDS_CPP
-#define ICDS_RECORDS_CPP
+L. Akritidis, 2026
+*/
+
+#ifndef ICDR_RECORDS_CPP
+#define ICDR_RECORDS_CPP
 
 #include "Records.h"
 #include "Record.cpp"
@@ -49,6 +51,26 @@ void Records::insert(uint32_t rec_id, char * rec_title, class Entity * matching_
 	}
 }
 
+/// Display the member records
+void Records::display() {
+	for (uint32_t i = 0; i < this->num_records; i++) {
+		this->records[i]->display();
+	}
+}
+
+/// Compute statistics for the Records structure
+void Records::compute_stats() {
+	uint32_t footprint = sizeof(class Record ** ) + this->num_alloc_records * sizeof(class Record *);
+	for (uint32_t i = 0; i < this->num_records; i++) {
+		footprint += this->records[i]->get_footprint();
+	}
+
+	printf(" === Records statistics =========================== \n");
+	printf("\tNumber of Records: %d\n", this->num_records);
+	printf("\tNumber of allocated Records: %d\n", this->num_alloc_records);
+	printf("\tMemory footprint: %5.2f MB\n", footprint / 1048576.0f);
+	printf(" ================================================== \n\n");
+}
 
 /// Write the Records to disk
 void Records::write(FILE * fp) {
@@ -68,20 +90,48 @@ void Records::write(FILE * fp) {
 
 /// Read the Records from disk
 void Records::read(FILE * fp) {
+	size_t nread = 0;
 	if (fp) {
-		fread(&this->num_records, sizeof(uint32_t), 1, fp);
-		fread(&this->avg_doc_len, sizeof(score_t), 1, fp);
-		fread(&this->total_num_words, sizeof(uint32_t), 1, fp);
+		nread = fread(&this->num_records, sizeof(uint32_t), 1, fp);
+		if (nread == 0) {
+			fprintf(stderr, "Unexpected end of Records file\n");
+		}
+
+		nread = fread(&this->avg_doc_len, sizeof(score_t), 1, fp);
+		nread = fread(&this->total_num_words, sizeof(uint32_t), 1, fp);
 		this->num_alloc_records = this->num_records;
 
 		this->records = (class Record **)malloc(this->num_records * sizeof(Record *));
 		for (uint32_t i = 0; i < this->num_records; i++) {
 			this->records[i] = new Record();
-			this->records[i]->read(fp);
+			this->records[i]->read(fp, NULL);
 			// ret->records[i]->display();
 		}
 	} else {
-		printf("Error reading Records file..."); fflush(NULL);
+		fprintf(stderr, "Error reading Records file\n");
+	}
+}
+
+/// Read the Records from disk
+void Records::read(FILE * fp, class Entities * ents) {
+	size_t nread = 0;
+	if (fp) {
+		nread = fread(&this->num_records, sizeof(uint32_t), 1, fp);
+		if (nread == 0) {
+			fprintf(stderr, "Unexpected end of Records file\n");
+		}
+		nread = fread(&this->avg_doc_len, sizeof(score_t), 1, fp);
+		nread = fread(&this->total_num_words, sizeof(uint32_t), 1, fp);
+		this->num_alloc_records = this->num_records;
+
+		this->records = (class Record **)malloc(this->num_records * sizeof(Record *));
+		for (uint32_t i = 0; i < this->num_records; i++) {
+			this->records[i] = new Record();
+			this->records[i]->read(fp, ents);
+			// ret->records[i]->display();
+		}
+	} else {
+		fprintf(stderr, "Error reading Records file\n");
 	}
 }
 
@@ -93,6 +143,7 @@ uint32_t Records::get_num_records() { return this->num_records; }
 class Record ** Records::get_records() { return this->records; }
 class Record * Records::get_record(uint32_t i) { return this->records[i]; }
 score_t Records::get_avg_doc_len() { return this->avg_doc_len; }
+uint32_t Records::get_doc_len(uint32_t idx) { return this->records[idx]->get_word_len(); }
 
 /// Mutators
 void Records::set_avg_doc_len(score_t v) { this->avg_doc_len = v; }
