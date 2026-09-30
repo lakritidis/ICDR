@@ -11,18 +11,16 @@ L. Akritidis, 2026
 
 class Word {
 	protected:
-		char * w;
-		class InvertedList * ivl;
+		uint32_t offset; /// Points at the beginning of the word in the large Lexicon buffer
 		score_t idf;
-
-		class Word * next;
+		class InvertedList * ivl;
 
 	public:
 		Word();
-		Word(char *);
+		Word(uint32_t);
 		~Word();
 
-		void display();
+		void display(char *);
 		void write(FILE *);
 
 		uint32_t insert_posting(uint32_t);
@@ -30,16 +28,16 @@ class Word {
 		void read_list(FILE *);
 		void compress_list(uint32_t, class Records * recs);
 
-		void set_word_string(char *);
+		void set_offset(uint32_t);
 		void set_ivl(class InvertedList *);
 		void set_idf(score_t);
-		void set_next(class Word *);
 
-		char * get_str();
+		void get_word_string(char *, char *);
 		class InvertedList * get_ivl();
 		score_t get_idf();
 		class Word * get_next();
 
+		uint32_t get_offset();
 		uint32_t get_freq();
 		uint32_t get_footprint(uint32_t);
 

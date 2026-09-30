@@ -24,7 +24,6 @@ InputData::InputData(class InputParams * pr) :
 InputData::~InputData() {
 }
 
-
 /// Construct the inverted index
 class Lexicon * InputData::build_index() {
 	char * input_data;
@@ -57,7 +56,7 @@ class Lexicon * InputData::build_index() {
 /// Build an inverted index structure
 class Lexicon * InputData::construct_index() {
 	char * text;
-	char word[128];
+	char word[MAX_TERM_LENGTH], temp_word[MAX_TERM_LENGTH];
 
 	uint32_t res = 0;
 	uint32_t r = 0, pos = 0, text_length = 0, y = 0, rid = 0;
@@ -81,7 +80,7 @@ class Lexicon * InputData::construct_index() {
 			if (text[pos] == 32) {
 				word[y] = 0;
 				if (y > this->params->get_min_term_length()) {
-					res = lex->insert(rid, word);
+					res = lex->insert(rid, word, temp_word);
 					if (res > 0) {
 						num_words += 1;
 						total_num_words += 1;
@@ -99,7 +98,7 @@ class Lexicon * InputData::construct_index() {
 
 		word[y] = 0;
 		if (y > this->params->get_min_term_length()) {
-			res = lex->insert(rid, word);
+			res = lex->insert(rid, word, temp_word);
 			if (res > 0) {
 				num_words += 1;
 				total_num_words += 1;
@@ -186,12 +185,10 @@ char * InputData::read_file(FILE * source, long * file_size) {
 /// query q like a typical search engine. If rec_id > 0, make q = rec_title and retrieve samples
 /// that are negative to rec_id.
 class Result * InputData::process_query(char * q_str, uint32_t rec_id, class Lexicon * lex,
-	class Entities * ents, class Records * records, uint32_t * retrieved_results) {
-		class Result * results = NULL;
+	uint32_t * retrieved_results) {
+		class Result * results = new Result[this->params->get_num_req_results()];
 
-		this->entities = ents;
-		this->records = records;
-
+		std::chrono::steady_clock::time_point begin, end;
 		/// For negative sampling, make the query string equal to the text of the Record for
 		/// which we are performing negative sampling. Otherwise, q is user-defined.
 		if (rec_id > 0) {
@@ -200,13 +197,11 @@ class Result * InputData::process_query(char * q_str, uint32_t rec_id, class Lex
 			strcpy(q_str, Rec->get_text());
 		}
 
-		class Query * q = new Query(q_str, this->params, lex, this->records);
-		if (this->params->get_query_processing_algorithm() == 1) {
-			results = q->process_BMW(rec_id);
-		} else if (this->params->get_query_processing_algorithm() == 2) {
-			results = q->process_DAAT(rec_id);
-		}
-
+		class Query<Result> * q = new Query<Result>(q_str, this->params, lex, this->records);
+		begin = std::chrono::steady_clock::now();
+		q->process(this->params->get_query_processing_algorithm(), rec_id, results, 0);
+		end = std::chrono::steady_clock::now();
+		// printf("\tDURATION: %llu usec\n", std::chrono::duration_cast<std::chrono::microseconds>(end - begin).count());
 		*retrieved_results = q->get_num_results();
 
 		delete q;
@@ -216,8 +211,58 @@ class Result * InputData::process_query(char * q_str, uint32_t rec_id, class Lex
 		return results;
 }
 
+/// Retrieve a negative samples for each record in the Records array.
+class PairResult * InputData::retrieve_all_negatives(class Lexicon * lex, uint32_t * retrieved_results) {
+	uint32_t i = 0, start = 0;
+	class Record * r = NULL;
+	std::chrono::steady_clock::time_point begin, end;
+
+	/// Preallocate space t store the results for multiple queries: num_queries * num_results
+	uint32_t num_alloc_results = this->records->get_num_records() * this->params->get_num_req_results();
+
+	class PairResult * results = new PairResult[num_alloc_results];
+	// printf("Allocated space for %d results\n", num_alloc_results);
+
+	class Query<PairResult> * q = new Query<PairResult>();
+	q->set_query_params(this->params);
+	q->set_doc_info(this->records);
+	q->set_lexicon(lex);
+
+	begin = std::chrono::steady_clock::now();
+	for (i = 0; i < this->records->get_num_records(); i++) {
+		r = this->records->get_record(i);
+		if (r) {
+			q->set_query_string(r->get_text());
+			q->process(this->params->get_query_processing_algorithm(), r->get_id(), results, start);
+/*
+			printf("Record ID %d, Title: %s\n", r->get_id(), q->get_query_string());
+			for (uint32_t j = start; j < start + q->get_num_results(); j++) {
+				printf("\tNegative %d: %d - %s, %d - %s --- Score: %5.3f\n", j,
+					results[j].get_left_docID(), results[j].get_left_text(),
+					results[j].get_right_docID(), results[j].get_right_text(), results[j].get_score());
+			}
+			getchar();
+*/
+			start += q->get_num_results();
+			//printf("\tStart: %d\n", start);
+		}
+
+		/// This avoids double deletion, since the query string is the entity title.
+		q->set_query_string(NULL);
+
+	}
+	end = std::chrono::steady_clock::now();
+
+	delete q;
+
+	return results;
+}
+
 inline class InputParams * InputData::get_params() { return this->params; }
 inline class Records * InputData::get_records() { return this->records; }
 inline class Entities * InputData::get_entities() { return this->entities; }
 
+inline void InputData::set_params(class InputParams * v) { this->params = v; }
+inline void InputData::set_records(class Records * v) { this->records = v; }
+inline void InputData::set_entities(class Entities * v) { this->entities = v; }
 #endif

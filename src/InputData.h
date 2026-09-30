@@ -24,12 +24,16 @@ class InputData {
 		~InputData();
 
 		class Lexicon * build_index();
-		class Result * process_query(char *, uint32_t,
-			class Lexicon *, class Entities *, class Records *, uint32_t *);
+		class Result * process_query(char *, uint32_t, class Lexicon *, uint32_t *);
+		class PairResult * retrieve_all_negatives(class Lexicon *, uint32_t *);
 
 		class InputParams * get_params();
 		class Records * get_records();
 		class Entities * get_entities();
+
+		void set_params(class InputParams *);
+		void set_records(class Records *);
+		void set_entities(class Entities *);
 };
 
 

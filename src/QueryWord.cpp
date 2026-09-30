@@ -24,8 +24,8 @@ QueryWord::QueryWord(class Word * wrd, uint32_t block_size) :
 	ivl_it(new InvertedListIterator(wrd->get_ivl(), block_size)),
 	q_pos(0) {
 
-		this->w = new char[strlen(wrd->get_str()) + 1];
-		strcpy(this->w, wrd->get_str());
+		//this->w = new char[strlen(wrd->get_str()) + 1];
+		//strcpy(this->w, wrd->get_str());
 
 		this->ivl = NULL;
 }

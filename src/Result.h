@@ -10,9 +10,10 @@ L. Akritidis, 2026
 #define ICDR_RESULT_H
 
 class Result {
-	uint32_t docID;
-	char * text;
-	score_t score;
+	protected:
+		uint32_t docID;
+		char * text;
+		score_t score;
 
 	public:
 		Result();
@@ -24,14 +25,13 @@ class Result {
 
 		~Result();
 
-		void destroy();
 		void display();
 
 		uint32_t get_docID();
 		char * get_text();
 		score_t get_score();
 
-		void set_score(double);
+		void set_score(score_t);
 };
 
 #endif // ICDR_RESULT_H

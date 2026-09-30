@@ -9,13 +9,19 @@ L. Akritidis, 2026
 #ifndef ICDR_ENTITY_H
 #define ICDR_ENTITY_H
 
+class Word;
+
 class Entity {
 	uint32_t id;
 	char * code;
-	uint32_t num_alloc_matching_records;
-	uint32_t num_matching_records;
 	uint32_t * matching_records;
+	class Word ** words;
 	class Entity * next;
+
+	uint16_t num_alloc_matching_records;
+	uint16_t num_matching_records;
+	uint16_t num_alloc_words;
+	uint16_t num_words;
 
 	public:
 		Entity();
@@ -24,6 +30,7 @@ class Entity {
 
 		void display();
 		void insert_matching_record(uint32_t);
+		void insert_word(class Word *);
 		class Record * get_matching_record_obj(class Record **, uint32_t);
 		void write(FILE *);
 		void read(FILE *);
@@ -34,8 +41,8 @@ class Entity {
 
 		uint32_t get_id();
 		char * get_code();
-		uint32_t get_num_matching_records();
-		uint32_t get_num_alloc_matching_records();
+		uint16_t get_num_matching_records();
+		uint16_t get_num_alloc_matching_records();
 		class Entity * get_next();
 
 		uint32_t get_footprint();

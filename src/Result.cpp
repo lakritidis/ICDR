@@ -30,7 +30,6 @@ Result::Result(const Result&s) {
 	printf("Copy constructor for class Result has been called"); fflush(NULL);
 }
 
-
 /// Destructor
 Result::~Result() {
 }
@@ -49,6 +48,6 @@ inline uint32_t Result::get_docID() { return this->docID; }
 inline char * Result::get_text() { return this->text; }
 
 /// Mutator: Set the score for this result
-inline void Result::set_score (double sc) { this->score = sc; }
+inline void Result::set_score (score_t sc) { this->score = sc; }
 
 #endif

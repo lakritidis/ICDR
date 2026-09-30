@@ -15,10 +15,13 @@ L. Akritidis, 2026
 Entity::Entity() :
 	id(0),
 	code(NULL),
+	matching_records(NULL),
+	words(NULL),
+	next(NULL),
 	num_alloc_matching_records(0),
 	num_matching_records(0),
-	matching_records(NULL),
-	next(NULL) {
+	num_alloc_words(1),
+	num_words(0) {
 
 	}
 
@@ -26,14 +29,19 @@ Entity::Entity() :
 Entity::Entity(uint32_t i, char c[]) :
 	id(i),
 	code(NULL),
+	matching_records(NULL),
+	words(NULL),
+	next(NULL),
 	num_alloc_matching_records(2),
 	num_matching_records(0),
-	matching_records(NULL),
-	next(NULL) {
+	num_alloc_words(1),
+	num_words(0) {
 		this->matching_records = (uint32_t *)malloc(this->num_alloc_matching_records * sizeof(uint32_t));
 
 		this->code = new char[strlen(c) + 1];
 		strcpy(this->code, c);
+
+		this->words = (class Word **)malloc(this->num_alloc_words * sizeof(class Word *));
 	}
 
 /// Entity Destructor
@@ -41,13 +49,20 @@ Entity::~Entity() {
 	if (this->code) {
 		delete [] this->code;
 	}
-	free(this->matching_records);
+
+	if (this->matching_records) {
+		free(this->matching_records);
+	}
+
+	if (this->words) {
+		free(this->words);
+	}
 };
 
 /// Display the member variables of an Entity object
 void Entity::display() {
 	printf("==================\n");
-	printf("Displaying Entity with ID: %d \n", this->id);
+	printf("Displaying Entity with ID: %d\n", this->id);
 	printf("\tID: %d, Matching Records: %u, Code: %s\n", this->id, this->num_matching_records, this->code);
 	printf("\tMatching_record IDs: ");
 	for (uint32_t i = 0; i < this->num_matching_records; i++) {
@@ -76,7 +91,7 @@ void Entity::write(FILE * fp) {
 	fwrite(&len, sizeof(uint32_t), 1, fp);
 	fwrite(this->code, sizeof(char), len, fp);
 
-	fwrite(&this->num_matching_records, sizeof(uint32_t), 1, fp);
+	fwrite(&this->num_matching_records, sizeof(uint16_t), 1, fp);
 	fwrite(this->matching_records, sizeof(uint32_t), this->num_matching_records, fp);
 }
 
@@ -86,6 +101,7 @@ void Entity::read(FILE * fp) {
 	size_t nread = 0;
 
 	nread = fread(&this->id, sizeof(uint32_t), 1, fp);
+	// printf("Entity ID: %d, ", this->id);
 	if (nread == 0) {
 		fprintf(stderr, "Unexpected end of Entities file\n");
 	}
@@ -97,7 +113,7 @@ void Entity::read(FILE * fp) {
 	} else {
 		this->code = NULL;
 	}
-	nread = fread(&this->num_matching_records, sizeof(uint32_t), 1, fp);
+	nread = fread(&this->num_matching_records, sizeof(uint16_t), 1, fp);
 
 	this->num_alloc_matching_records = this->num_matching_records;
 	this->matching_records = (uint32_t *)malloc(this->num_matching_records * sizeof(uint32_t));
@@ -113,6 +129,16 @@ uint32_t Entity::get_footprint() {
 		this->num_matching_records * sizeof(uint32_t);
 }
 
+/// Insert a Word object into the local words array. This helps processing the Entity as a Query.
+/// We do not have to parse the title again, the words have already been extracted.
+void Entity::insert_word(class Word *w) {
+	this->words[this->num_words++] = w;
+	if (this->num_alloc_words >= this->num_words) {
+		this->num_alloc_words *= 2;
+		this->words = (class Word **)realloc(this->words, this->num_alloc_words * sizeof(Word *));
+	}
+}
+
 /// Mutators
 void Entity::set_id(uint32_t v) { this->id = v; }
 void Entity::set_next(class Entity * v) { this->next = v; }
@@ -124,7 +150,8 @@ void Entity::set_code(char * v) {
 /// Accessors
 inline uint32_t Entity::get_id() { return this-> id; }
 inline char * Entity::get_code() { return this->code; }
-inline uint32_t Entity::get_num_matching_records() { return this->num_matching_records; }
+inline uint16_t Entity::get_num_matching_records() { return this->num_matching_records; }
+inline uint16_t Entity::get_num_alloc_matching_records() { return this->num_alloc_matching_records; }
 inline class Entity * Entity::get_next() { return this->next; }
 inline class Record * get_matching_record_obj(class Record ** recs, uint32_t idx) { return recs[idx]; }
 

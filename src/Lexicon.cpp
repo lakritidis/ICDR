@@ -20,10 +20,13 @@ Lexicon::Lexicon(class InputParams * pr) {
 		this->hash_table[i] = NULL;
 	}
 
+	this->word_buffer_alloc_length = 32 * 1048576; /// Allocate 32MB of initial space for the word buffer
+	this->word_buffer_length = 0;
+	this->word_buffer = (char *)malloc(this->word_buffer_alloc_length * sizeof(char));
+
 	this->min_term_length = pr->get_min_term_length();
 	this->ColissionCount = 0;
 	this->num_words = 0;
-	this->num_chains = 0;
 	this->tslots = TableSize;
 	this->compression_block_size = pr->get_compression_block_size();
 }
@@ -31,19 +34,20 @@ Lexicon::Lexicon(class InputParams * pr) {
 /// Destructor
 Lexicon::~Lexicon() {
 	uint32_t i;
-	class Word * q;
 
 	for (i = 0; i < this->tslots; i++) {
-		while (this->hash_table[i] != NULL) {
-			q = this->hash_table[i]->get_next();
+		if (this->hash_table[i]) {
 			delete this->hash_table[i];
-			this->hash_table[i] = q;
 		}
 	}
 
 	if (this->hash_table) {
 		delete [] this->hash_table;
 		this->hash_table = NULL;
+	}
+
+	if (this->word_buffer) {
+		free(this->word_buffer);
 	}
 }
 
@@ -95,8 +99,11 @@ uint32_t Lexicon::JZHash(char * key, uint32_t len) {
 
 /// Insert the word t in the hash table and associate a posting for the document d.
 /// Return 1 upon success, 0 otherwise
-uint32_t Lexicon::insert(uint32_t d, char * t) {
-	uint32_t res = 0;
+uint32_t Lexicon::insert(uint32_t d, char * t, char * ret_c) {
+	uint32_t res = 0, starting_offset = this->word_buffer_length;
+	char c;
+
+	class Word *p = NULL;
 
 	if (strlen(t) <= this->min_term_length) {
 		return 0;
@@ -104,99 +111,129 @@ uint32_t Lexicon::insert(uint32_t d, char * t) {
 
 	/// Find the hash value of the input term
 	uint32_t HashValue = this->djb2(t) & (this->tslots - 1);
+	//printf("inserting %s, hash val: %d, starting offset: %d\n", t, HashValue, starting_offset);
 
 	/// Now search in the hash table to check whether this term exists or not
-	if (this->hash_table[HashValue] != NULL) {
-		this->ColissionCount++;
-		class Word *q, *p;
+	while (this->hash_table[HashValue] != NULL) {
 		p = this->hash_table[HashValue];
+		this->ColissionCount++;
 
-		/// Traverse the linked list that represents the chain.
-		for (q = this->hash_table[HashValue]; q != NULL; q = q->next) {
-			if (strcmp(q->w, t) == 0) {
-
-				res = q->insert_posting(d);
-
-				/// Move-To-Front. Move the node to the front of the chain to accelerate the
-				/// searches of frequent terms. If the node is already in the chain's head we don't
-				/// need to apply it
-				if (q != this->hash_table[HashValue]) {
-					/// Connect the previous element to the next.
-					p->next = q->next;
-
-					/// The old head goes back one position.
-					q->next = this->hash_table[HashValue];
-
-					/// Change head.
-					this->hash_table[HashValue] = q;
-				}
-				return res; /// Return and exit
-			}
-			/// p stores the next node of the chain in the next step of the loop, q becomes q->next
-			p = q;
+		/// The term was found in the lexicon
+		p->get_word_string(this->word_buffer, ret_c);
+		if (strcmp(t, ret_c) == 0) {
+			// printf("doc %d, %s was found in the lexicon at offset %d\n", d, ret_c, p->get_offset());
+			res = p->insert_posting(d);
+			return res; /// Return and exit
 		}
-	} else {
-		this->num_chains++;
+		HashValue++;
 	}
 
-	/// The key hasn't been found on a non-empty chain, or the chain is empty.
-	this->num_words++;
+	/// The key wasn't found in the Lexicon.
+	/// 1: Append the word's string into the big word buffer.
+	c = t[0];
+	while (c) {
+		this->word_buffer[this->word_buffer_length++] = c;
+		c = *(++t);
+		if (this->word_buffer_length >= this->word_buffer_alloc_length) {
+			// printf("Expanding...");
+			this->word_buffer_alloc_length *= 2;
+			this->word_buffer = (char *)realloc(this->word_buffer, this->word_buffer_alloc_length * sizeof(char));
+		}
+	}
+	this->word_buffer[this->word_buffer_length++] = 0;
 
-	/// Create a new posting and re-assign the linked list's head
-	class Word * wrd = new Word(t);
+	/// 2: Create a new Word object and insert the posting.
+	class Word * wrd = new Word(starting_offset);
 	wrd->insert_posting(d);
 
-	/// Reassign the chain's head
-	wrd->next = this->hash_table[HashValue];
+	/// 3: Insert the Word object into the hash table
 	this->hash_table[HashValue] = wrd;
 
-	//this->footprint += sizeof(Word) + (strlen(t) + 1) * sizeof(char) +
-	//	sizeof(InvertedList) + 2 * wrd->get_ivl()->get_num_alloc_postings() * sizeof(uint32_t);
+	/// 4: Compute the table's load factor; expand if load_factor becomes high
+	this->num_words++;
+	float load_factor = (float)this->num_words / (float)this->tslots;
+	// printf("Load factor (%d), %5.2f\n", this->num_words, load_factor);
+	if(load_factor > 0.3) {
+		//printf("Expanding");
+		this->expand_table();
+	}
 
 	return 1;
 }
 
-/// Insert the word t in the hash table and associate a posting for the document d.
-/// Return 1 upon success, 0 otherwise
-uint32_t Lexicon::insert(char * t, score_t idf, class InvertedList * ivl) {
-	/// Find the hash value of the input term
-	uint32_t HashValue = this->djb2(t) & (this->tslots - 1);
+/// Double the hash table size. Re-hash the existing keys and insert them into the new table.
+void Lexicon::expand_table() {
+	uint32_t i = 0, new_table_size = 2 * this->tslots, HashValue = 0;
+	char word_buf[MAX_TERM_LENGTH];
+	class Word * w = NULL;
+	class Word ** new_table = new Word * [new_table_size];
 
-	/// Now search in the hash table to check whether this term exists or not
-	if (this->hash_table[HashValue] != NULL) {
-		this->ColissionCount++;
-		class Word *q;
-
-		/// Traverse the linked list that represents the chain.
-		for (q = this->hash_table[HashValue]; q != NULL; q = q->next) {
-			if (strcmp(q->w, t) == 0) {
-				printf("term was found! : %s\n", t);
-				return 1; /// Return and exit
-			}
-		}
-	} else {
-		this->num_chains++;
+	for (i = 0; i < new_table_size; i++) {
+		new_table[i] = NULL;
 	}
 
-	/// The key hasn't been found on a non-empty chain, or the chain is empty.
-	this->num_words++;
+	/// Traverse the old table and move the non-NULL elements to the new table (after rehashing)
+	for (i = 0; i < this->tslots; i++) {
+		w = this->hash_table[i];
+		if (w) {
+			w->get_word_string(this->word_buffer, word_buf);
+			// printf("Rehashing %s\n", word_buf); fflush(NULL);
+			HashValue = this->djb2(word_buf) & (new_table_size - 1);
+			while (new_table[HashValue] != NULL) {
+				HashValue++;
+			}
+			new_table[HashValue] = w;
+		}
+	}
 
-	/// Create a new posting and re-assign the linked list's head
+	/// Delete the old table (NOT the keys)
+	delete [] this->hash_table;
+	this->hash_table = new_table;
+	this->tslots *= 2;
+}
+
+/// Insert the word t in the hash table and associate a posting for the document d.
+/// Return 1 upon success, 0 otherwise
+uint32_t Lexicon::insert(uint32_t offset, char * t, score_t idf, class InvertedList * ivl) {
+	// char temp_buffer[MAX_TERM_LENGTH];
 	class Word * wrd = new Word();
-	wrd->set_word_string(t);
+	wrd->set_offset(offset);
 	wrd->set_idf(idf);
 	wrd->set_ivl(ivl);
 
-	//this->footprint += sizeof(Word) + (strlen(t) + 1) * sizeof(char) +
-	//	sizeof(InvertedList) + (ivl->get_dwrd() + ivl->get_swrd()) * sizeof(uint32_t);
+	wrd->get_word_string(this->word_buffer, t);
+
+	uint32_t HashValue = this->djb2(t) & (this->tslots - 1);
+
+	/// Now search in the hash table to check whether this term exists or not
+	while (this->hash_table[HashValue] != NULL) {
+/*
+		this->hash_table[HashValue]->get_word_string(this->word_buffer, temp_buffer);
+		printf("here (%s, %s)\n", t, temp_buffer); getchar();
+		if (strcmp(temp_buffer, t) == 0) {
+			printf("term was found! : %s\n", t);
+			return 1;
+		}
+*/
+		HashValue++;
+	}
+
+	/// Insert the term into an empty slot in the hash table
+	this->hash_table[HashValue] = wrd;
+
+	/// Compute the table's load factor; expand if load_factor becomes high
+	this->num_words++;
+	float load_factor = (float)this->num_words / (float)this->tslots;
+	//printf("Load factor (%d), %5.2f\n", this->num_words, load_factor);
+	if(load_factor > 0.3) {
+		//printf("Expanding");
+		this->expand_table();
+	}
+
+	//this->footprint += sizeof(Word) + sizeof(InvertedList) + (ivl->get_dwrd() + ivl->get_swrd()) * sizeof(uint32_t);
 	//if (ivl->get_num_postings() > this->compression_block_size) {
 	//	this->footprint += ivl->get_num_blocks(this->compression_block_size) * ivl->get_list_block_size();
 	//}
-
-	/// Reassign the chain's head
-	wrd->next = this->hash_table[HashValue];
-	this->hash_table[HashValue] = wrd;
-
 	return 1;
 }
 
@@ -208,14 +245,13 @@ void Lexicon::compress_index(class Records * recs) {
 
 	for (uint32_t i = 0; i < this->tslots; i++) {
 		if (this->hash_table[i] != NULL) {
-			for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
-				idf = log( (num_records - q->get_freq() + 0.5f) / (q->get_freq() + 0.5f) + 1.0f);
-				// idf = log10((score_t)num_records / (score_t)q->get_freq());
-				q->set_idf(idf);
-				q->compress_list(this->compression_block_size, recs);
-				// printf("Word: %s, freq: %d, idf: %5.3f\n -- ", q->get_str(), q->get_freq(), idf);
-				// q->display(); getchar();
-			}
+			q = this->hash_table[i];
+			idf = log( (num_records - q->get_freq() + 0.5f) / (q->get_freq() + 0.5f) + 1.0f);
+			// idf = log10((score_t)num_records / (score_t)q->get_freq());
+			q->set_idf(idf);
+			q->compress_list(this->compression_block_size, recs);
+			// printf("Word: %s, freq: %d, idf: %5.3f\n -- ", q->get_str(), q->get_freq(), idf);
+			// q->display(); getchar();
 		}
 	}
 }
@@ -224,15 +260,22 @@ void Lexicon::compress_index(class Records * recs) {
 void Lexicon::write_index(FILE * fp) {
 	uint32_t num_words = 0;
 	class Word * q;
+	size_t nwrite = 0;
+
 	if (fp) {
+		nwrite = fwrite(&this->word_buffer_length, sizeof(uint32_t), 1, fp);
+		if (nwrite == 0) { printf("Error writing the word buffer length\n"); fflush(NULL); }
+
+		nwrite = fwrite(this->word_buffer, sizeof(char), this->word_buffer_length, fp);
+		if (nwrite < this->word_buffer_length) { printf("Error writing the word buffer\n"); fflush(NULL); }
+
 		for (uint32_t i = 0; i < this->tslots; i++) {
 			if (this->hash_table[i] != NULL) {
-				for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
-					num_words++;
-					// printf("Writing %d: %s (%d)\n", num_words, q->get_str(), q->get_ivl()->get_num_postings());
-					q->write(fp);
-					q->write_list(fp, this->compression_block_size);
-				}
+				q = this->hash_table[i];
+				num_words++;
+				// printf("Writing %d: %s (%d)\n", num_words, q->get_str(), q->get_ivl()->get_num_postings());
+				q->write(fp);
+				q->write_list(fp, this->compression_block_size);
 			}
 		}
 	} else {
@@ -244,27 +287,31 @@ void Lexicon::write_index(FILE * fp) {
 
 /// Read the inverted index from disk.
 void Lexicon::read_index(FILE * fp, uint32_t block_size) {
-	uint32_t tl = 0;
+	uint32_t ofs = 0;
 	score_t idf = 0.0;
 	size_t nread = 0;
+	char temp_buffer[MAX_TERM_LENGTH];
 
 	if (fp) {
+
+		nread = fread(&this->word_buffer_length, sizeof(uint32_t), 1, fp);
+		this->word_buffer_alloc_length = this->word_buffer_length + 1;
+		this->word_buffer = (char *)realloc(this->word_buffer, (this->word_buffer_length + 1) * sizeof(char));
+		nread = fread(this->word_buffer, sizeof(char), this->word_buffer_length, fp);
+		this->word_buffer[this->word_buffer_length] = 0;
+
 		while (!feof(fp)) {
-			nread = fread(&tl, sizeof(uint32_t), 1, fp);
+			nread = fread(&ofs, sizeof(uint32_t), 1, fp);
 			if (nread == 0) {
 				break;
 			}
-
-			char *term = new char[tl + 1];
-
-			nread = fread(term, sizeof(char), tl, fp);
-			term[tl] = 0;
 			nread = fread(&idf, sizeof(score_t), 1, fp);
+			//printf("%d (%d, %5.3f)\n", x++, ofs, idf); fflush(NULL);
 
 			class InvertedList * ivl = new InvertedList();
 			ivl->read(fp);
 
-			this->insert(term, idf, ivl);
+			this->insert(ofs, temp_buffer, idf, ivl);
 		}
 	} else {
 		delete this;
@@ -279,10 +326,9 @@ void Lexicon::display() {
 
 	for (uint32_t i = 0; i < this->tslots; i++) {
 		if (this->hash_table[i] != NULL) {
-			for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
-				q->display();
-				printf("\n");
-			}
+			q = this->hash_table[i];
+			q->display(this->word_buffer);
+			printf("\n");
 		}
 	}
 }
@@ -294,9 +340,8 @@ void Lexicon::compute_stats() {
 
 	for (uint32_t i = 0; i < this->tslots; i++) {
 		if (this->hash_table[i] != NULL) {
-			for (q = this->hash_table[i]; q != NULL; q = q->get_next()) {
-				footprint += q->get_footprint(this->compression_block_size);
-			}
+			q = this->hash_table[i];
+			footprint += q->get_footprint(this->compression_block_size);
 		}
 	}
 
@@ -311,30 +356,33 @@ void Lexicon::display_hash_table_performance() {
 	printf(" === Lexicon hash table statistics ================ \n");
 	printf("\tTable size (slots): %d\n", this->tslots);
 	printf("\tNum keys: %d\n", this->num_words);
-	printf("\tNum chains: %d\n", this->num_chains);
-	printf("\tAvg chain length: %5.1f\n", (float)this->num_words / (float)this->num_chains);
 	printf("\tNum collisions: %d\n", this->ColissionCount);
 	printf(" ================================================== \n\n");
 }
 
 /// Query Processing: Search the lexicon for a given term.
-class Word * Lexicon::search(char * t) {
+class Word * Lexicon::search(char * t, char * ret_c) {
+	class Word *p;
+
 	/// Find the hash value of the input term
 	uint32_t HashValue = this->djb2(t) & (this->tslots - 1);
+	//printf("inserting %s, hash val: %d, starting offset: %d\n", t, HashValue, starting_offset);
 
 	/// Now search in the hash table to check whether this term exists or not
-	if (this->hash_table[HashValue] != NULL) {
-		class Word *q;
+	while (this->hash_table[HashValue] != NULL) {
+		p = this->hash_table[HashValue];
 
-		/// Traverse the linked list that represents the chain.
-		for (q = this->hash_table[HashValue]; q != NULL; q = q->next) {
-			if (strcmp(q->w, t) == 0) {
-				return q; /// The word was found in the Lexicon. Return it.
-			}
+		/// The term was found in the lexicon
+		p->get_word_string(this->word_buffer, ret_c);
+		if (strcmp(t, ret_c) == 0) {
+			return p; /// Return and exit
 		}
+		HashValue++;
 	}
-	printf("The term '%s' was NOT found in the Lexicon!\n", t);
+
+	// printf("The term '%s' was NOT found in the Lexicon!\n", t);
 	return NULL;
 }
 
+inline char * Lexicon::get_word_buffer() { return this->word_buffer; }
 #endif

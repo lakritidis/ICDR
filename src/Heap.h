@@ -39,8 +39,7 @@ template<class T> class MinHeap : public Heap<T> {
 	public:
 		MinHeap(int);
 		void insert(T *);
-		//void insert_replace(T *);
-		void insert_replace(score_t, uint32_t, class Records *);
+		void insert_replace(score_t, uint32_t, uint32_t, class Records *);
 		T * remove_head();
 };
 

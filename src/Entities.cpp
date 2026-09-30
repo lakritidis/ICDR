@@ -120,7 +120,7 @@ void Entities::insert(class Entity * e) {
 	}
 
 	this->num_nodes++;
-
+	// printf("Nodes %d, ID: %d, Code: %s\n", this->num_nodes, e->get_id(), e->get_code()); fflush(NULL);
 	/// Reassign the chain's head
 	e->set_next(this->hash_table[HashValue]);
 	this->hash_table[HashValue] = e;

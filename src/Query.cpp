@@ -13,72 +13,83 @@ L. Akritidis, 2026
 #include "Query.h"
 
 /// Default constructor
-Query::Query() :
+template <class T> Query<T>::Query() :
 	query_string(NULL),
 	num_terms(0),
 	query_terms(),
 	num_results(0),
+	lexicon(NULL),
 	qparams(NULL),
 	doc_info(NULL) {
 }
 
 /// Constructor
-Query::Query(char * q, class InputParams * params, class Lexicon * lex, class Records * recs) :
+template <class T> Query<T>::Query(char * q, class InputParams * params, class Lexicon * lex, class Records * recs) :
 	query_string(NULL),
 	num_terms(0),
 	query_terms(),
 	num_results(0),
+	lexicon(lex),
 	qparams(params),
 	doc_info(recs) {
 
-		int32_t i = 0, old_pos = -1, pos = 0, new_pos = 0, len = strlen(q);
-		uint32_t y = 0;
-		char term[params->get_max_term_length() + 1];
+		uint32_t len = strlen(q);
 
 		this->query_string = new char[len + 1];
 		strcpy(this->query_string, q);
 		this->query_string[len] = 0;
 
-		for (pos = 0; pos < len; pos++) {
-			/// A "+" character has been found, or end of query string reached.
-			if (q[pos] == 32 || pos == len - 1) {
-				while (pos < len) {
-					pos++;
-					if (q[pos] != 32) {
-						break;
-					}
-				}
+		this->extract_query_terms(len);
+}
 
-				if (pos > 0 && pos < len) {
-					new_pos = pos - 1;
-				} else if (pos == 0) {
-					new_pos = 0;
-				} else if (pos == len) {
-					new_pos = len;
-				}
+template <class T> void Query<T>::extract_query_terms(int32_t len) {
+	int32_t i = 0, old_pos = -1, pos = 0, new_pos = 0;
+	uint32_t y = 0;
+	char term[MAX_TERM_LENGTH];
 
-				y = 0;
-				for (i = old_pos + 1; i < new_pos; i++) {
-					if (y < params->get_max_term_length() - 1) {
-						if (q[i] > 32 && q[i] < 127) {
-							term[y] = q[i];
-							y++;
-						}
-					} else {
-						break;
-					}
+	for (pos = 0; pos < len; pos++) {
+		/// A space character has been found, or end of query string reached.
+		if (this->query_string[pos] == 32 || pos == len - 1) {
+			while (pos < len) {
+				pos++;
+				if (this->query_string[pos] != 32) {
+					break;
 				}
-				term[y] = 0;
-				if (y > params->get_min_term_length()) {
-					this->insert_term(term, y, lex);
-				}
-				old_pos = new_pos;
 			}
+
+			if (pos > 0 && pos < len) {
+				new_pos = pos - 1;
+			} else if (pos == 0) {
+				new_pos = 0;
+			} else if (pos == len) {
+				new_pos = len;
+			}
+
+			y = 0;
+			for (i = old_pos + 1; i < new_pos; i++) {
+				if (y < this->qparams->get_max_term_length() - 1) {
+					if (this->query_string[i] > 32 && this->query_string[i] < 127) {
+						term[y] = this->query_string[i];
+						y++;
+						if (y >= MAX_TERM_LENGTH) {
+							break;
+						}
+					}
+				} else {
+					break;
+				}
+			}
+			term[y] = 0;
+			if (y > this->qparams->get_min_term_length()) {
+				this->insert_term(term, y);
+			}
+			old_pos = new_pos;
 		}
+	}
 }
 
 /// Destructor
-Query::~Query() {
+template <class T> Query<T>::~Query() {
 	if (this->query_string) {
 		delete [] this->query_string;
 		this->query_string = NULL;
@@ -90,7 +101,7 @@ Query::~Query() {
 }
 
 /// Insert a QueryWord into the local list of Query - compute the term's IDF
-uint32_t Query::insert_term(char * tm, uint32_t l, class Lexicon * lex) {
+template <class T> uint32_t Query<T>::insert_term(char * tm, uint32_t l) {
 	if (l <= this->qparams->get_min_term_length()) {
 		return 0;
 	}
@@ -100,14 +111,15 @@ uint32_t Query::insert_term(char * tm, uint32_t l, class Lexicon * lex) {
 
 	/// Check if the term is already in the qterms array.
 	for (i = 0; i < this->num_terms; i++) {
-		if (strcmp(this->query_terms[i]->get_str(), tm) == 0) {
+		this->query_terms[i]->get_word_string(this->lexicon->get_word_buffer(), tmp);
+		if (strcmp(tmp, tm) == 0) {
 			return 1;
 		}
 	}
 
 	/// Search into the lexicon to obtain information related to the term (term frequency
 	/// and address of the inverted list)
-	temp = lex->search(tm);
+	temp = this->lexicon->search(tm, this->tmp);
 	if (temp) {
 		QueryWord * qTerm = new QueryWord(temp, this->qparams->get_compression_block_size());
 		qTerm->set_idf(temp->get_idf());
@@ -115,13 +127,14 @@ uint32_t Query::insert_term(char * tm, uint32_t l, class Lexicon * lex) {
 		this->num_terms++;
 	}
 
+	// printf("Terms size: %d\n", this->query_terms.size());
 	return 1;
 }
 
 /// Checks if any of the query terms involved inverted lists is exhausted (i.e. we have checked all
 /// the postings of the list). This flag signals the query processing termination (in case of an
 /// exhaustive evaluation).
-bool Query::lists_exhausted() {
+template <class T> bool Query<T>::lists_exhausted() {
 	for (uint32_t i = 0; i < this->num_terms; i++) {
 		if (this->query_terms[i]->get_ivl_it()->is_exhausted()) {
 			return true;
@@ -131,7 +144,7 @@ bool Query::lists_exhausted() {
 }
 
 /// Returns the maximum docID among those we are currently examining (cur_docIDs).
-uint32_t Query::max_docID() {
+template <class T> uint32_t Query<T>::max_docID() {
 	class InvertedListIterator * itr;
 	uint32_t max_id = this->query_terms[0]->get_ivl_it()->get_cur_docID();
 
@@ -146,7 +159,7 @@ uint32_t Query::max_docID() {
 }
 
 /// Returns the minimum docID among those we are currently examining (cur_docIDs).
-uint32_t Query::min_docID () {
+template <class T> uint32_t Query<T>::min_docID () {
 	class InvertedListIterator * itr;
 	uint32_t min_id = this->query_terms[0]->get_ivl_it()->get_cur_docID();
 
@@ -161,9 +174,10 @@ uint32_t Query::min_docID () {
 }
 
 /// Evaluate a document according to BM25 by summing the contribution of each term
-void Query::score_BM25(uint32_t docID, class MaxHeap<Result> * heap) {
+template <class T> void Query<T>::score_BM25(uint32_t docID, class MaxHeap<T> * heap, uint32_t ndocID) {
 	uint32_t i = 0, doc_len = 0;
 	score_t score = 0.0f, K = 0.0f, avg_doc_len = this->doc_info->get_avg_doc_len();
+	T * res;
 
 	/// Retrieve the document length, the average document length and the corpus size.
 	doc_len = this->doc_info->get_record(docID - 1)->get_word_len();
@@ -173,7 +187,14 @@ void Query::score_BM25(uint32_t docID, class MaxHeap<Result> * heap) {
 	/// Create a new Result and compute its BM25 score (DocIDs are 1-indexed, the entries in
 	/// this->doc_info are zero-indexed - that's why we subtract 1 from docID)
 	class Record * corresp_record = this->doc_info->get_record(docID - 1);
-	class Result *res = new Result(corresp_record->get_id(), corresp_record->get_text());
+
+	if constexpr (std::is_same_v<T, PairResult>) {
+		class Record * left_record = this->doc_info->get_record(ndocID - 1);
+		res = new PairResult(left_record->get_id(), left_record->get_text(),
+			corresp_record->get_id(), corresp_record->get_text());
+	} else if constexpr (std::is_same_v<T, Result>) {
+		res = new Result(corresp_record->get_id(), corresp_record->get_text());
+	}
 
 	/// Sum the contribution of each term
 	for (i = 0; i < this->num_terms; i++) {
@@ -190,14 +211,21 @@ void Query::score_BM25(uint32_t docID, class MaxHeap<Result> * heap) {
 //	this->doc_info->get_record(docID - 1)->display();
 }
 
+template <class T> void Query<T>::process(uint32_t algo, uint32_t neg_docID, T * results, uint32_t s) {
+	if (algo == 1) {
+		this->process_BMW(neg_docID, results, s);
+	} else if (algo == 2) {
+		this->process_DAAT(neg_docID, results, s);
+	}
+}
+
 /// Document-At-A-Time Query Processing
-class Result * Query::process_DAAT(uint32_t neg_docID) {
+template <class T> void Query<T>::process_DAAT(uint32_t neg_docID, T * results, uint32_t s) {
 	// printf("\n=== DAAT QUERY PROCESSING (%d requested results)===\n", this->qparams->get_num_req_results());
 	uint32_t t = 0, dmax = 0;
 	bool proceed;
 	class InvertedListIterator * list_iterator;
-	class Result * r = NULL;
-	class Result * res = NULL;
+	T * r = NULL;
 	score_t max_score_lists = 0.0f, max_score_th = 0.0f;
 
 	if (this->num_terms > 0) {
@@ -208,10 +236,8 @@ class Result * Query::process_DAAT(uint32_t neg_docID) {
 				return a->get_c_ivl_it()->get_freq() > b->get_c_ivl_it()->get_freq();
 			});
 
-		res = new Result [this->qparams->get_num_req_results()];
-
 		/// Initialize scoring heap. This structure stores the best documents near its head.
-		class MaxHeap<Result> *pq = new MaxHeap<Result>(this->query_terms[0]->get_ivl_it()->get_freq());
+		class MaxHeap<T> * pq = new MaxHeap<T>(this->query_terms[0]->get_ivl_it()->get_freq());
 
 		/// ///////////////////////////////////////////////////////////////////////////////////////
 		/// Phase 1: Decompress the first blocks of the inverted lists of all query terms. In case
@@ -228,7 +254,6 @@ class Result * Query::process_DAAT(uint32_t neg_docID) {
 			//	this->query_terms[t]->get_str(), this->query_terms[t]->get_ivl_it()->get_num_postings(),
 			//	this->query_terms[t]->get_ivl_it()->get_num_blocks());
 			//list_iterator->display_skip_table(this->qparams->get_compression_block_size());
-
 		}
 
 		/// ///////////////////////////////////////////////////////////////////////////////////////
@@ -236,7 +261,6 @@ class Result * Query::process_DAAT(uint32_t neg_docID) {
 		/// "easy-to-find" data (document IDs, frequencies, document lengths etc.).
 		/// ///////////////////////////////////////////////////////////////////////////////////////
 		while (!this->lists_exhausted()) {
-
 			dmax = this->max_docID();
 
 			//printf("List 1 cur docID: %d. List 2 cur docID: %d. List 3 cur docID: %d. max docID: %d\n",
@@ -256,7 +280,7 @@ class Result * Query::process_DAAT(uint32_t neg_docID) {
 				// printf("\n == DocID %d IS A CANDIDATE === \n", dmax);
 
 				/// This is a candidate result. Compute document's score here.
-				score_BM25(dmax, pq);
+				score_BM25(dmax, pq, neg_docID);
 
 				for (t = 0; t < this->num_terms; t++) {
 					proceed = this->query_terms[t]->get_ivl_it()->next();
@@ -278,7 +302,7 @@ class Result * Query::process_DAAT(uint32_t neg_docID) {
 
 			/// Keep only the number of requested results and delete the rest of them.
 			if (this->num_results < this->qparams->get_num_req_results()) {
-				res[this->num_results++] = (*r);
+				results[s + this->num_results++] = (*r);
 			}
 			delete r;
 		}
@@ -291,18 +315,16 @@ class Result * Query::process_DAAT(uint32_t neg_docID) {
 	} else {
 		this->num_results = 0;
 	}
-
-	return res;
 }
 
-/// BlockMaxWAND (BMW) Query Processing
-class Result * Query::process_BMW(uint32_t neg_docID) {
+/// BlockMaxWAND (BMW) Query Processing - The results are written to an array of Result objects
+template <class T> void Query<T>::process_BMW(uint32_t neg_docID, T * results, uint32_t s) {
 	// printf("\n=== BMW QUERY PROCESSING (%d requested results)===\n", this->qparams->get_num_req_results());
 	int32_t pivot = -1, matched = 0;
-	uint32_t t = 0, cand_docID = 0, d = 0, n_terms = 0, negative_entity = 0;
+	uint32_t t = 0, cand_docID = 0, d = 0, negative_entity = 0;
 
 	class InvertedListIterator * list_iterator;
-	class Result * r = NULL, *res = NULL;
+	T * r = NULL;
 	class QueryWord * pivotTerm = NULL;
 	score_t score = 0.0f, ub_sum = 0.0f, min_threshold = 0.0f, max_threshold = 0.0f;
 	score_t max_score_lists = 0.0f, max_score_th = 0.0f;
@@ -310,11 +332,11 @@ class Result * Query::process_BMW(uint32_t neg_docID) {
 	if (this->num_terms > 0) {
 		if (neg_docID > 0) {
 			negative_entity = this->doc_info->get_record(neg_docID - 1)->get_matching_entity()->get_id();
+			// printf("Negative docID: %d, Negative Entity: %d\n", neg_docID, negative_entity);
 		}
-		res = new Result[this->qparams->get_num_req_results()];
 
 		/// Initialize scoring heap. This structure stores the best documents near its head.
-		class MinHeap<Result> *pq = new MinHeap<Result>(this->qparams->get_num_req_results());
+		class MinHeap<T> * pq = new MinHeap<T>(this->qparams->get_num_req_results());
 
 		/// ///////////////////////////////////////////////////////////////////////////////////////
 		/// Phase 1: Decompress the first blocks of the inverted lists of all query terms. In case
@@ -327,8 +349,8 @@ class Result * Query::process_BMW(uint32_t neg_docID) {
 			max_score_lists += list_iterator->get_listMax_score();
 			max_score_th += this->query_terms[t]->get_idf() * (BM25_k1_PARAM + 1);
 
-			//printf("\tDecompressed block 0 ot term %d: %s, Frequency: %d. List Blocks: %d\n", t+1,
-			//	this->query_terms[t]->get_str(), this->query_terms[t]->get_ivl_it()->get_num_postings(),
+			//printf("\tDecompressed block 0 ot term %d, Frequency: %d. List Blocks: %d\n", t + 1,
+			//	this->query_terms[t]->get_ivl_it()->get_num_postings(),
 			//	this->query_terms[t]->get_ivl_it()->get_num_blocks());
 			//list_iterator->display_skip_table(this->qparams->get_compression_block_size());
 		}
@@ -342,26 +364,23 @@ class Result * Query::process_BMW(uint32_t neg_docID) {
 			// printf("\nNext iteration\n");
 
 			/// Remove the query terms for which the inverted list has been exhausted.
-			n_terms = this->num_terms;
-			for (t = 0; t < n_terms; t++) {
-				list_iterator = this->query_terms[t]->get_ivl_it();
-				if (list_iterator->is_exhausted()) {
-					// printf("\tTerm %d (%s) list has been exhausted at docID = %d", t,
-					//	this->query_terms[t]->get_str(), list_iterator->get_cur_docID());
-					delete this->query_terms[t];
-					this->query_terms[t] = this->query_terms.back();
-					this->query_terms.pop_back();
+			for (auto it = this->query_terms.begin(); it != this->query_terms.end(); ) {
+				QueryWord* term = *it;
+
+				if (term->get_ivl_it()->is_exhausted()) {
+					delete term;
+					it = this->query_terms.erase(it);
 					this->num_terms--;
-					//this->display_query_terms();
+				} else {
+					++it;
 				}
 			}
-
 			/// Sort the remaining query terms in increasing current docID order.
 			sort(this->query_terms.begin(), this->query_terms.end(),
 				[](const QueryWord * a, const QueryWord * b) {
 					return a->get_c_ivl_it()->get_cur_docID() < b->get_c_ivl_it()->get_cur_docID();
 				});
-			// this->display_query_terms();
+			//this->display_query_terms();
 
 			/// Pivoting step by using the block max scores (BMW)
 			/// Update the threshold here
@@ -375,7 +394,7 @@ class Result * Query::process_BMW(uint32_t neg_docID) {
 				list_iterator = this->query_terms[t]->get_ivl_it();
 				if (list_iterator->get_cur_block() >= list_iterator->get_num_blocks()) {
 					getchar();
-					return res;
+					return;
 				}
 
 				ub_sum += list_iterator->get_cur_blockMax_score();
@@ -418,7 +437,7 @@ class Result * Query::process_BMW(uint32_t neg_docID) {
 
 				if (matched > 0 && score >= min_threshold && score <= max_threshold) {
 					if (negative_entity != this->doc_info->get_record(cand_docID - 1)->get_matching_entity()->get_id()) {
-						pq->insert_replace(score, cand_docID, this->doc_info);
+						pq->insert_replace(score, cand_docID, neg_docID, this->doc_info);
 					}
 				}
 
@@ -451,7 +470,7 @@ class Result * Query::process_BMW(uint32_t neg_docID) {
 
 			/// Keep only the number of requested results and delete the rest of them.
 			if (this->num_results < this->qparams->get_num_req_results()) {
-				res[this->num_results++] = (*r);
+				results[s + this->num_results++] = (*r);
 			}
 			delete r;
 		}
@@ -464,12 +483,10 @@ class Result * Query::process_BMW(uint32_t neg_docID) {
 	} else {
 		this->num_results = 0;
 	}
-
-	return res;
 }
 
 /// Display the query terms and the current state of the InvertedListIterator during query processing
-void Query::display_query_terms() {
+template <class T> void Query<T>::display_query_terms() {
 	class QueryWord * qt = NULL;
 	class InvertedListIterator * it = NULL;
 
@@ -477,19 +494,39 @@ void Query::display_query_terms() {
 		qt = this->query_terms[i];
 		it = qt->get_ivl_it();
 
-		printf("\tTerm %d: %s, Freq: %d, CurDocID: %d, CurBlock: %d, CurOffset: %d, BlockMax: %5.3f\n",
-			i, qt->get_str(), it->get_num_postings(), it->get_cur_docID(), it->get_cur_block(), it->get_cur_offset(),
+		printf("\tTerm %d, Freq: %d, CurDocID: %d, CurBlock: %d, CurOffset: %d, BlockMax: %5.3f\n",
+			i, it->get_num_postings(), it->get_cur_docID(), it->get_cur_block(), it->get_cur_offset(),
 			it->get_cur_blockMax_score());
+
 	}
 }
 
-
 /// Comparison function for QuickSorting the qterms array in increasing current docID order.
-int32_t Query::compare_qterms(const void *A, const void *B) {
+template <class T> int32_t Query<T>::compare_qterms(const void * A, const void * B) {
 	class QueryWord *iA = *(class QueryWord **)A;
 	class QueryWord *iB = *(class QueryWord **)B;
 	return iA->get_ivl_it()->get_cur_docID() - iB->get_ivl_it()->get_cur_docID();
 }
 
-uint32_t Query::get_num_results() { return this->num_results; }
+template <class T> uint32_t Query<T>::get_num_results() { return this->num_results; }
+template <class T> char * Query<T>::get_query_string() { return this->query_string; }
+
+template <class T> void Query<T>::set_query_string(char * v) {
+	this->query_string = v;
+	if (v) {
+		uint32_t len = strlen(this->query_string);
+		this->extract_query_terms(len);
+	} else {
+		for (uint32_t i = 0; i < this->query_terms.size(); i++) {
+			delete this->query_terms[i];
+		}
+
+		this->query_terms.clear();
+		this->num_terms = 0;
+	}
+}
+
+template <class T> void Query<T>::set_query_params(class InputParams * v) { this->qparams = v;}
+template <class T> void Query<T>::set_doc_info(class Records * v) { this->doc_info = v; }
+template <class T> void Query<T>::set_lexicon(class Lexicon * v) { this->lexicon = v; }
 #endif

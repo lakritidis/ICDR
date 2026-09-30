@@ -26,7 +26,7 @@ InvertedListIterator::InvertedListIterator(class InvertedList * il, uint32_t blo
 	block_decoded_freq(false),
 	block_size( block_size ),
 	num_blocks( il->get_num_blocks(block_size) ) {
-		if (num_blocks > 1) {
+		if (this->num_blocks > 1) {
 			this->final_docID = il->skip_table[num_blocks - 1].last;
 		}
 }
@@ -220,9 +220,8 @@ void InvertedListIterator::forward_seek(uint32_t search_docId, bool shallow) {
 			if (this->cur_docID == this->dec_docIDs + blk_size) {
 
 				/// Search
-				res = this->search_skip_table(this->cur_block + 1,
-					this->inv_list->get_num_blocks(this->block_size) - 1, search_docId);
-
+				res = this->search_skip_table(this->cur_block+1, this->num_blocks-1, search_docId);
+				// printf("cur block: %d/%d (res: %d)\n", this->cur_block, this->num_blocks, res);
 				blk_size = this->inv_list->skip_table[this->cur_block].block_size;
 
 				/// If the search is not successful, break the operation
@@ -313,7 +312,12 @@ uint32_t InvertedListIterator::search_skip_table(uint32_t first, uint32_t last, 
 		}
 	}
 
-	if (this->inv_list->skip_table[mid].last < key) { mid++; }
+	if (this->inv_list->skip_table[mid].last < key) {
+		mid++;
+		if (mid > this->num_blocks - 1) {
+			mid = this->num_blocks - 1;
+		}
+	}
 
 	// printf("Exiting Next Block: %d. Last DocID: %d. ", mid, this->inv_list->skip_table[mid].last); getchar();
 	this->cur_block = mid;

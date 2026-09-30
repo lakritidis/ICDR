@@ -9,7 +9,6 @@ L. Akritidis, 2026
 #ifndef ICDR_RECORDS_H
 #define ICDR_RECORDS_H
 
-
 class Records {
 	uint32_t num_records;
 	uint32_t num_alloc_records;

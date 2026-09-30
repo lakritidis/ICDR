@@ -13,44 +13,36 @@ L. Akritidis, 2026
 
 /// Default constructor
 Word::Word() :
-	w(NULL),
-	ivl(NULL),
+	offset(0),
 	idf(0.0),
-	next(NULL) {
+	ivl(NULL) {
 }
 
 /// Constructor
-Word::Word(char * wrd) :
-	w(new char[strlen(wrd) + 1]),
-	ivl(new InvertedList(1)),
+Word::Word(uint32_t ofs) :
+	offset(ofs),
 	idf(0.0),
-	next(NULL) {
-		strcpy(this->w, wrd);
+	ivl(new InvertedList(1)) {
 }
 
 /// Destructor
 Word::~Word() {
-	if (this->w) {
-		delete [] this->w;
-	}
-
 	if (this->ivl) {
 		delete this->ivl;
 	}
 }
 
 /// Display the properties of a Word object
-void Word::display() {
-	printf("\n\nWord: %s, IDF: %5.3f, Inverted List:\n", this->w, this->idf); fflush(NULL);
+void Word::display(char * word_buffer) {
+	char tmp[MAX_TERM_LENGTH];
+	this->get_word_string(word_buffer, tmp);
+	printf("\n\nWord: %s, IDF: %5.3f, Inverted List:\n", tmp, this->idf); fflush(NULL);
 	this->ivl->display();
 }
 
 /// Write the Word to a file
 void Word::write(FILE * fp) {
-	uint32_t word_len = strlen(this->w);
-
-	fwrite(&word_len, sizeof(uint32_t), 1, fp);
-	fwrite(this->w, sizeof(char), word_len, fp);
+	fwrite(&this->offset, sizeof(uint32_t), 1, fp);
 	fwrite(&this->idf, sizeof(score_t), 1, fp);
 }
 
@@ -66,7 +58,7 @@ void Word::compress_list(uint32_t block_size, class Records * recs) {
 
 /// Compute the memory footprint of a Word object (+ its inverted list)
 uint32_t Word::get_footprint(uint32_t block_size) {
-	return sizeof(Word) + (strlen(w) + 1) * sizeof(char) + this->ivl->get_footprint(block_size);
+	return sizeof(Word) + this->ivl->get_footprint(block_size);
 }
 
 /// Write the Word's inverted list to a file
@@ -80,15 +72,31 @@ void Word::read_list(FILE * fp) {
 }
 
 /// Mutators
-void Word::set_word_string(char * v) { this->w = v; }
+void Word::set_offset(uint32_t v) { this->offset = v; }
 void Word::set_ivl(class InvertedList * v) { this->ivl = v; }
-void Word::set_next(class Word * v) { this->next = v; }
 void Word::set_idf(score_t v) { this->idf = v; }
 
+/// Retrieve the word string from the large Lexicon `word_buffer`. Store the string in `ret_buffer`.
+void Word::get_word_string(char * word_buffer, char * ret_buffer) {
+	uint32_t ofs = this->offset, x = 0;
+	char c = word_buffer[ofs];
+
+	/// Start reading from the position `ofs` until a zero termination character is found.
+	while (c != 0) {
+		c = word_buffer[ofs++];
+		ret_buffer[x++] = c;
+		//printf("%d. %s|\n", x, ret_buffer);
+		if (x >= MAX_TERM_LENGTH) {
+			break;
+		}
+	}
+	ret_buffer[x] = 0;
+	//printf("Offset: %d, ret_buffer: %s", this->offset, ret_buffer); getchar();
+}
+
 /// Accessors
-inline char * Word::get_str() { return this->w; }
 inline class InvertedList * Word::get_ivl() { return this->ivl; }
-inline class Word * Word::get_next() { return this->next; }
+uint32_t Word::get_offset() { return this->offset; }
 inline score_t Word::get_idf() { return this->idf; }
 
 uint32_t Word::get_freq() { return this->ivl->get_num_postings(); }

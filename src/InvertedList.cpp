@@ -97,13 +97,13 @@ score_t InvertedList::compute_score_scaler(uint32_t block_size, score_t *scores)
 	for (uint32_t i = 0; i < block_size; i++) {
 		if (i < block_size - 1) {
 			diff = scores[i + 1] - scores[i];
-			// printf("score %d (%5.5f) vs score %d (%5.5f), diff = %5.5f\n", i+1, scores[i+1], i, scores[i], diff);
+			//printf("score %d (%5.5f) vs score %d (%5.5f), diff = %5.5f\n", i+1, scores[i+1], i, scores[i], diff);
 			if (diff < min_diff && diff > 0.01f) {
 				min_diff = diff;
 			}
 		}
 	}
-	// printf("Min diff: %5.3f", min_diff);
+	//printf("Min diff: %5.3f", min_diff);
 	// q = round(score / max_score * (2^b - 1));
 	return 1.0f / min_diff;
 }
@@ -243,7 +243,7 @@ void InvertedList::compress_long_list(uint32_t block_size, score_t idf, class Re
 		scores[x] = score;
 		sscores[x] = score;
 
-		// printf("\tDocID=%d, DL=%5.1f, AvgDL=%5.3f, K=%5.3f, idf=%5.3f, df=%d, score=%5.3f\n",
+		//printf("\tDocID=%d, DL=%5.1f, AvgDL=%5.3f, K=%5.3f, idf=%5.3f, df=%d, score=%5.3f\n",
 		//	this->docIDs[i], dl, avgdl, K, idf, this->dscors[i], score);
 
 		/// Compute docID gaps

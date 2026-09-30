@@ -17,7 +17,7 @@ L. Akritidis, 2026
 template <class T> Heap<T>::Heap(int32_t MaxElements) {
 
 	/// Allocate memory for MaxElements items plus 1 for the sentinel.
-	this->items = new Result *[MaxElements + 1];
+	this->items = new T * [MaxElements + 1];
 
 	this->min_score = 0.0f;
 
@@ -26,7 +26,7 @@ template <class T> Heap<T>::Heap(int32_t MaxElements) {
 	this->alloc = 0;
 
 	/// Allocate memory for the sentinel and place it in the Heap's head.
-	this->items[0] = new Result();
+	this->items[0] = new T();
 }
 
 /// Heap Destructor
@@ -150,22 +150,34 @@ template <class T> void MinHeap<T>::insert(T * itm) {
 /// i) The heap is not full, and ii) if the score of the incoming element is greater than the min
 /// in the Heap (stored in its head).
 /// After the insertion, the structure stores the item with the maximum score in its head.
-template <class T> void MinHeap<T>::insert_replace(score_t score, uint32_t docID, class Records * doc_info) {
+template <class T> void MinHeap<T>::insert_replace(score_t score, uint32_t docID, uint32_t ndocID,
+	class Records * doc_info) {
 
-	/// If the Heap is full, don't insert the item and return.
-	if (this->is_full()) {
-		if(this->items[1]->get_score() >= score) {
-			return;
-		} else {
-			class Result * res = this->remove_head();
-			delete res;
+		T * itm = NULL;
+
+		/// If the Heap is full, don't insert the item and return.
+		if (this->is_full()) {
+			if(this->items[1]->get_score() >= score) {
+				return;
+			} else {
+				T * res = this->remove_head();
+				delete res;
+			}
 		}
-	}
 
-	T * itm = new Result(docID, doc_info->get_record(docID - 1)->get_text());
-	itm->set_score(score);
+		if constexpr (std::is_same_v<T, PairResult>) {
+			if (ndocID > 0) {
+				itm = new PairResult(ndocID, doc_info->get_record(ndocID - 1)->get_text(),
+					docID, doc_info->get_record(docID - 1)->get_text());
+			} else {
+				itm = new PairResult(0, NULL, docID, doc_info->get_record(docID - 1)->get_text());
+			}
+		} else if constexpr (std::is_same_v<T, Result>) {
+			itm = new Result(docID, doc_info->get_record(docID - 1)->get_text());
+		}
+		itm->set_score(score);
 
-	this->insert(itm);
+		this->insert(itm);
 }
 
 /// Pop the element from the MinHeap's head. Permute the rest of the items to preserve the ordering.
