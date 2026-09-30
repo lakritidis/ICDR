@@ -28,16 +28,22 @@ if __name__ == '__main__':
     input_dataframe.head(10)
 
     index = icdr_class.icdr()
-    index.build(input_file=entities_file, lex_size=2097152, min_term_length=1, max_term_length=100, block_size=128)
-    # index.write("output/")
-    # index.read("output/")
+    #index.build(input_file=entities_file, lex_size=2097152, min_term_length=1, max_term_length=100, block_size=128)
+    #index.write("output/")
+    index.read("output/")
     # index.display_index()
     # index.display_records()
     # index.display_entities()
-    index.compute_stats(1)
+    # index.compute_stats(1)
 
-    records = index.retrieve_relevant(q="bosch coffee maker", num_results=20)
-    print("Results:\n", records)
+    #records = index.retrieve_relevant(q="bosch coffee maker", num_results=20)
+    #print("Results relevant to q:\n", records)
+
+    #recs = index.get_records()
+    #print(recs.iloc[9, :])
+
+    negatives = index.retrieve_negative(rid=10, num_results=20)
+    print("Negative samples:\n", negatives)
 
 
     #index.display_index()
