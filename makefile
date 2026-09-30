@@ -10,12 +10,12 @@ LIBFLAGS=-shared -fPIC
 
 ifeq ($(UNAME_S), Linux)
 	WARNING_FLAGS=-Wall -Wno-sign-compare
-	OPTIMIZATION_FLAGS=-O3 -std=c++11 -flto
+	OPTIMIZATION_FLAGS=-O3 -std=c++17 -flto
 	LIB_FILENAME = $(LIB_NAME).so
 endif
 ifeq ($(UNAME_S), Darwin)
 	WARNING_FLAGS=-Wall -Wall -Werror
-	OPTIMIZATION_FLAGS=-O3 -std=c++11
+	OPTIMIZATION_FLAGS=-O3 -std=c++17
 	LIB_FILENAME = $(LIB_NAME).dylib
 endif
 

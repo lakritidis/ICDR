@@ -9,9 +9,11 @@
 #include <dirent.h>
 #include <assert.h>
 #include <vector>
+#include <type_traits>
 
 #include "src/include/coding_factory.cpp"
 typedef float score_t;
+const uint32_t MAX_TERM_LENGTH = 100;
 
 /// Integer encoders/decoders
 coding_factory cf;
@@ -35,8 +37,7 @@ float LOL_SCALER = 512.0f;
 #include "src/InvertedListBuffer.cpp"
 
 #include "src/Lexicon.cpp"
-#include "src/FST.h"
-#include "src/Result.cpp"
+#include "src/PairResult.cpp"
 #include "src/Heap.cpp"
 #include "src/Query.cpp"
 #include "src/InputData.cpp"
@@ -50,6 +51,16 @@ struct rettype {
 };
 
 struct resulttype {
+	unsigned int num_results;
+	class Result * results;
+};
+
+struct pairresulttype {
+	unsigned int num_results;
+	class PairResult * results;
+};
+
+struct negativesamplestype {
 	unsigned int num_results;
 	class Result * results;
 };

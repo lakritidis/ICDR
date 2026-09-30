@@ -13,6 +13,7 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-std=c++17" />
 					<Add option="-g" />
 					<Add directory="./" />
 					<Add directory="src/" />
@@ -32,7 +33,7 @@
 					<Add option="-flto" />
 					<Add option="-O3" />
 					<Add option="-Wall" />
-					<Add option="-std=c++14" />
+					<Add option="-std=c++17" />
 					<Add directory="./" />
 					<Add directory="src/" />
 					<Add directory="src" />
@@ -76,18 +77,6 @@
 		<Unit filename="src/Entity.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
-		<Unit filename="src/FST.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="src/FST.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="src/FSTpacked.cpp">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
-		<Unit filename="src/FSTpacked.h">
-			<Option target="&lt;{~None~}&gt;" />
-		</Unit>
 		<Unit filename="src/Heap.cpp">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
@@ -128,6 +117,12 @@
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="src/Lexicon.h">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/PairResult.cpp">
+			<Option target="&lt;{~None~}&gt;" />
+		</Unit>
+		<Unit filename="src/PairResult.h">
 			<Option target="&lt;{~None~}&gt;" />
 		</Unit>
 		<Unit filename="src/Query.cpp">

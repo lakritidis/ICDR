@@ -2,6 +2,22 @@
 /// ICDR exposed C functions - Dynamic Library References
 /// C functions that i) wrap around the corresponding C++ functions and ii) are exposed to shared library.
 
+/**
+Lib Interface
+ - struct rettype * build
+ - struct resulttype retrieve_relevant
+ - struct resulttype retrieve_negative
+ - void write_index
+ - struct rettype * read_index
+ - void destroy
+ - void display_index
+ - void display_entities
+ - struct entitytype get_entities
+ - void display_records
+ - struct recordtype get_records
+ - void compute_stats
+*/
+
 #include "icdr.cpp"
 
 extern "C" {
@@ -81,6 +97,8 @@ struct resulttype retrieve_relevant(char * q, const unsigned int algo, const uns
 
 		class InputParams * PARAMS = new InputParams(params);
 		InputData input_data(PARAMS);
+		input_data.set_entities(ret->ents);
+		input_data.set_records(ret->recs);
 
 		coding_factory cf;
 		if (!PFOR_CODER) {
@@ -92,8 +110,7 @@ struct resulttype retrieve_relevant(char * q, const unsigned int algo, const uns
 		}
 
 		/// Process the Query here and "copy" the results to the output structure
-		ResultsStruct.results = input_data.process_query(q, 0, ret->lex, ret->ents, ret->recs,
-														&retrieved_results);
+		ResultsStruct.results = input_data.process_query(q, 0, ret->lex, &retrieved_results);
 		ResultsStruct.num_results = retrieved_results;
 
 		delete PARAMS;
@@ -133,6 +150,8 @@ struct resulttype retrieve_negative(const unsigned int rec_id, const unsigned in
 
 		class InputParams * PARAMS = new InputParams(params);
 		InputData input_data(PARAMS);
+		input_data.set_entities(ret->ents);
+		input_data.set_records(ret->recs);
 
 		coding_factory cf;
 		if (!PFOR_CODER) {
@@ -144,8 +163,7 @@ struct resulttype retrieve_negative(const unsigned int rec_id, const unsigned in
 		}
 
 		/// Process the Query here and "copy" the results to the output structure
-		ResultsStruct.results = input_data.process_query(NULL, rec_id, ret->lex, ret->ents,
-														ret->recs, &retrieved_results);
+		ResultsStruct.results = input_data.process_query(NULL, rec_id, ret->lex, &retrieved_results);
 		ResultsStruct.num_results = retrieved_results;
 
 		delete PARAMS;
@@ -161,6 +179,59 @@ struct resulttype retrieve_negative(const unsigned int rec_id, const unsigned in
 		}
 
 		return ResultsStruct;
+}
+
+/// Retrieve nres negative samples for the entries of the Records object the inverted index ret. Use
+/// the algo algorithm (DAAT, BMW, etc.) to return samples within the similarity range [minsim, maxsim].
+struct pairresulttype retrieve_all_negatives(const unsigned int algo, const unsigned int nres,
+	float mins, float maxs, struct rettype * ret) {
+
+		struct pairresulttype PairResultsStruct;
+		uint32_t retrieved_results = 0;
+		struct UserParams params{};
+
+		params.input_data_file = NULL;
+		params.output_dir = NULL;
+		params.random_string = NULL;
+		params.lexicon_table_size = ret->in_params->get_lexicon_table_size();
+		params.compression_block_size = ret->in_params->get_compression_block_size();
+
+		params.query_processing_algorithm = algo;
+		params.num_req_results = nres;
+		params.min_sim = mins;
+		params.max_sim = maxs;
+
+		class InputParams * PARAMS = new InputParams(params);
+		InputData input_data(PARAMS);
+		input_data.set_entities(ret->ents);
+		input_data.set_records(ret->recs);
+
+		coding_factory cf;
+		if (!PFOR_CODER) {
+			PFOR_CODER = cf.get_coder(1);
+		}
+
+		if (!VBYTE_CODER) {
+			VBYTE_CODER = cf.get_coder(2);
+		}
+
+		/// Process the Query here and "copy" the results to the output structure
+		PairResultsStruct.results = input_data.retrieve_all_negatives(ret->lex, &retrieved_results);
+		PairResultsStruct.num_results = retrieved_results;
+
+		delete PARAMS;
+
+		if (PFOR_CODER) {
+			delete PFOR_CODER;
+			PFOR_CODER = NULL;
+		}
+
+		if(VBYTE_CODER) {
+			delete VBYTE_CODER;
+			VBYTE_CODER = NULL;
+		}
+
+		return PairResultsStruct;
 }
 
 /// Write the inverted index and the accompanying data (Entities and Records) that are passed via
@@ -380,12 +451,12 @@ void display_index(struct rettype * ret) {
 	}
 }
 
-/// Display the Entities
+/// Display the collection of Entities
 void display_entities(struct rettype * ret) {
 	ret->ents->display();
 }
 
-/// Return the Entities
+/// Return the collection of Entities
 struct entitytype get_entities(struct rettype * ret) {
 	uint32_t i = 0, x = 0;
 	class Entity * q;
@@ -404,12 +475,12 @@ struct entitytype get_entities(struct rettype * ret) {
 	return EntitiesStruct;
 }
 
-/// Display the Records
+/// Display the Record collection
 void display_records(struct rettype * ret) {
 	ret->recs->display();
 }
 
-/// Display the Records
+/// Return the collection of Records
 struct recordtype get_records(struct rettype * ret) {
 	uint32_t i = 0, x = 0;
 	struct recordtype RecordsStruct;

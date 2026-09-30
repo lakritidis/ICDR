@@ -7,7 +7,7 @@ set INC_DIR=-Isrc\
 set OBJ_DIR=obj\Release\
 set BIN_DIR=bin\Release\
 
-set CFLAGS=-O3 -std=c++11 -lpthread -Wall -Werror -Wno-unused-but-set-variable -Wno-sign-compare -Wno-unused-value -Wno-unused-result
+set CFLAGS=-O3 -std=c++17 -lpthread -Wall -Werror -Wno-unused-but-set-variable -Wno-sign-compare -Wno-unused-value -Wno-unused-result
 set LIBFLAGS=-shared
 set DLLFLAGS=-Wl,--subsystem,windows
 
